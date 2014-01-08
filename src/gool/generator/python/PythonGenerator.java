@@ -20,6 +20,7 @@ package gool.generator.python;
 import gool.ast.core.ArrayNew;
 import gool.ast.core.BinaryOperation;
 import gool.ast.core.Block;
+import gool.ast.core.Case;
 import gool.ast.core.CastExpression;
 import gool.ast.core.Catch;
 import gool.ast.core.ClassDef;
@@ -51,6 +52,7 @@ import gool.ast.core.ParentCall;
 import gool.ast.core.RecognizedDependency;
 import gool.ast.core.Return;
 import gool.ast.core.Statement;
+import gool.ast.core.Switch;
 import gool.ast.core.This;
 import gool.ast.core.ThisCall;
 import gool.ast.core.Throw;
@@ -371,6 +373,29 @@ public class PythonGenerator extends CommonCodeGenerator implements
 			} else {
 				out += formatIndented("else:%1", pif.getElseStatement());
 			}
+		}
+		return out;
+	}
+	
+	@Override
+	public String getCode(Switch s) {
+		String out = "";
+		int i=0;	
+		
+		for (Case c : s.getListCases()){
+			if (i == 0){
+				out += formatIndented("if %s == %s:", s.getVar(),c.getExp());
+				out += formatIndented("%1", c.getStatement());
+			}
+			else if (c.getExp() == null){
+				out += formatIndented("else:");
+				out += formatIndented("%1", c.getStatement());
+			}
+			else{
+				out += formatIndented("elif %s == %s:", s.getVar(),c.getExp());
+				out += formatIndented("%1", c.getStatement());
+			}
+			i++;
 		}
 		return out;
 	}
