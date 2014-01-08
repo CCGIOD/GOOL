@@ -49,9 +49,9 @@ public class GoolTest {
 	private List<Platform> platforms = Arrays.asList(
 
 			(Platform) JavaPlatform.getInstance(),
-			(Platform) CSharpPlatform.getInstance(),
-			(Platform) CppPlatform.getInstance(),
-			(Platform) PythonPlatform.getInstance()// ,
+//			(Platform) CSharpPlatform.getInstance(),
+			(Platform) CppPlatform.getInstance()
+//			(Platform) PythonPlatform.getInstance()// ,
 //			 (Platform) AndroidPlatform.getInstance() ,
 //			 (Platform) ObjcPlatform.getInstance()
 
@@ -372,6 +372,32 @@ public class GoolTest {
 
 		compareResultsDifferentPlatforms(input, expected);
 	}
+
+  @Test
+  public void simpleCase() throws Exception {
+    String input =TestHelper
+      .surroundWithClassMain(
+          +"Integer truc= 1;"
+          +"switch(truc) {"
+          +"case 1:"
+          +"System.out.println(\"blah\");"
+          +"break;"
+          +"case 2:"
+          +"System.out.println(\"bleh\");"
+          +"break;"
+          +"}",
+          MAIN_CLASS_NAME);
+    String expected = "blah";
+
+    //this feature works only for python.
+    excludePlatformForThisTest((Platform) JavaPlatform.getInstance());
+    excludePlatformForThisTest((Platform) CSharpPlatform.getInstance());
+    excludePlatformForThisTest((Platform) CppPlatform.getInstance());
+    excludePlatformForThisTest((Platform) AndroidPlatform.getInstance());
+    excludePlatformForThisTest((Platform) ObjcPlatform.getInstance());
+
+    compareResultsDifferentPlatforms(input, expected);
+  }
 
 	@Test
 	public void simpleForEach() throws Exception {
