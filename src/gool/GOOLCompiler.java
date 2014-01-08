@@ -70,24 +70,24 @@ public class GOOLCompiler {
 				while ((ligne = g.readLine()) != null)
 					extToNCopy.add(ligne);
 			} catch (Exception e) {
-				Log.e(e);
+				//Log.e(e);
 			}
 
 			Collection<File> filesNonChange = getFilesInFolderNonExe(folder,
 					extToNCopy);
 			concreteJavaToConcretePlatform(
 					JavaPlatform.getInstance(filesNonChange), files);
-			concreteJavaToConcretePlatform(
-					CSharpPlatform.getInstance(filesNonChange), files);
+			/*concreteJavaToConcretePlatform(
+					CSharpPlatform.getInstance(filesNonChange), files);*/
 			concreteJavaToConcretePlatform(
 					CppPlatform.getInstance(filesNonChange), files);
-			concreteJavaToConcretePlatform(
+			/*concreteJavaToConcretePlatform(
 					PythonPlatform.getInstance(filesNonChange), files);
 			concreteJavaToConcretePlatform(
-					XmlPlatform.getInstance(filesNonChange), files);
+					XmlPlatform.getInstance(filesNonChange), files);*/
 			// TODO: same for android & Objc
-			concreteJavaToConcretePlatform(AndroidPlatform.getInstance(), files);
-			concreteJavaToConcretePlatform(ObjcPlatform.getInstance(), files);
+			//concreteJavaToConcretePlatform(AndroidPlatform.getInstance(), files);
+			//concreteJavaToConcretePlatform(ObjcPlatform.getInstance(), files);
 
 		} catch (Exception e) {
 			Log.e(e);
@@ -96,6 +96,7 @@ public class GOOLCompiler {
 
 	public static Collection<File> getFilesInFolder(File folder, String ext) {
 		Collection<File> files = new ArrayList<File>();
+		
 		for (File f : folder.listFiles()) {
 			if (f.isDirectory()) {
 				files.addAll(getFilesInFolder(f, ext));
