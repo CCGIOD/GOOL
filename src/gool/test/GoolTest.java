@@ -377,7 +377,7 @@ public class GoolTest {
   public void simpleCase() throws Exception {
     String input =TestHelper
       .surroundWithClassMain(
-          +"Integer truc= 1;"
+          "Integer truc= 1;"
           +"switch(truc) {"
           +"case 1:"
           +"System.out.println(\"blah\");"
