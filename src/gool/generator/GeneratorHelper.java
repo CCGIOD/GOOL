@@ -99,11 +99,14 @@ public class GeneratorHelper {
 	public static Map<Platform, List<File>> printClassDefs(
 			Collection<ClassDef> classDefs) throws FileNotFoundException {
 		Map<Platform, List<File>> compilationUnits = new HashMap<Platform, List<File>>();
-
+		
 		for (ClassDef classDef : classDefs) {
 
 			// The target platform is held by the GOOL class, retrieve it.
 			Platform platform = (Platform) classDef.getPlatform();
+			
+			//System.out.println(platform);
+			
 			// Get a codePrinter corresponding to that platform.
 			CodePrinter currentPrinter = CodePrinter.getPrinter(platform);
 			// If that platform is not yet in the map, add it.
