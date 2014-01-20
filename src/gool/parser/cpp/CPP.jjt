@@ -166,8 +166,12 @@ SKIP :
   "//" : IN_LINE_COMMENT
 |
   "/*" : IN_COMMENT
+  {/*
+  Pour reconaitre les includes
 |
   "#" : PREPROCESSOR_OUTPUT
+  */
+  }
 }
 
 <IN_LINE_COMMENT> SKIP:
