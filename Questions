@@ -1,0 +1,1 @@
+- pourquoi la platform d'output est indiquée dans l'arbre ? Doit-on faire un test sur la platform au moment de la création de l'AST GOOL (ex: return sur void) ?
