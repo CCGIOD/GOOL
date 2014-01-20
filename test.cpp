@@ -1,7 +1,6 @@
 int main (){
 
-	m(*this);
-	m(this);
+	++++i;
 
 }
 
