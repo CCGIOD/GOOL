@@ -1,5 +1,3 @@
-#include f
-
 int main (){
 
 	m(*this);
