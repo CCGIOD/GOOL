@@ -30,6 +30,7 @@ import gool.ast.core.Comment;
 import gool.ast.core.CompoundAssign;
 import gool.ast.core.Constant;
 import gool.ast.core.Constructor;
+import gool.ast.core.DoWhile;
 import gool.ast.core.ExpressionUnknown;
 import gool.ast.core.Field;
 import gool.ast.core.FieldAccess;
@@ -661,6 +662,10 @@ public abstract class CommonCodeGenerator implements CodeGenerator {
 	@Override
 	public String getCode(Case c) {
 		return "case /* Not Implemented, passed on by GOOL */";
+	}
+	
+	public String getCode(DoWhile d) {
+		return formatIndented("do{ %s } while(%1)",d.getDoStatement(), d.getCondition());
 	}
 
 }

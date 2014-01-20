@@ -1014,9 +1014,11 @@ public class JavaRecognizer extends TreePathScanner<Object, Context> {
 		if (n.getExpression() != null)	
 			exp = (Expression) n.getExpression().accept(this, context);
 		
-		Statement s = (Statement) n.getStatements().get(0).accept(this, context);
-		
-		return new Case(exp,s);
+		Block b = new Block();
+		for (int i=0;i<n.getStatements().size();i++)
+			b.addStatement((Statement) n.getStatements().get(i).accept(this, context));
+				
+		return new Case(exp,b);
 	}
 
 	public Object visitSwitch(SwitchTree s, Context context){		

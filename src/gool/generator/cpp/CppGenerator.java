@@ -690,6 +690,7 @@ public class CppGenerator extends CommonCodeGenerator /*implements
 		out +=formatIndented("}");
 		return out;
 	}
+	
 	@Override
 	public String getCode(Case c){
 		

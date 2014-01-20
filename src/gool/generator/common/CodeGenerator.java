@@ -34,6 +34,7 @@ import gool.ast.core.Constant;
 import gool.ast.core.Constructor;
 import gool.ast.core.CustomDependency;
 import gool.ast.core.Dependency;
+import gool.ast.core.DoWhile;
 import gool.ast.core.EnhancedForLoop;
 import gool.ast.core.EqualsCall;
 import gool.ast.core.ExpressionUnknown;
@@ -447,4 +448,6 @@ public interface CodeGenerator {
 	String getCode(Switch s);
 	
 	String getCode(Case c);
+	
+	String getCode(DoWhile d);
 }

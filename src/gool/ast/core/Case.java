@@ -6,11 +6,11 @@ public class Case extends Statement {
 
 	private Expression exp;
 	
-	private Statement statement;
+	private Block block;
 	
-	public Case (Expression e, Statement s){
+	public Case (Expression e, Block s){
 		this.exp=e;
-		this.statement=s;
+		this.block=s;
 	}
 	
 	public Expression getExp() {
@@ -18,7 +18,7 @@ public class Case extends Statement {
 	}
 
 	public Statement getStatement() {
-		return statement;
+		return block;
 	}
 	
 	@Override

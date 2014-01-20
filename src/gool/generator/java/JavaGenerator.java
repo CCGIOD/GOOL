@@ -18,6 +18,7 @@
 package gool.generator.java;
 
 import gool.ast.core.BinaryOperation;
+import gool.ast.core.Case;
 import gool.ast.core.Catch;
 import gool.ast.core.ClassDef;
 import gool.ast.core.ClassNew;
@@ -29,12 +30,14 @@ import gool.ast.core.EnhancedForLoop;
 import gool.ast.core.EqualsCall;
 import gool.ast.core.Field;
 import gool.ast.core.Finally;
+import gool.ast.core.If;
 import gool.ast.core.MainMeth;
 import gool.ast.core.Meth;
 import gool.ast.core.Modifier;
 import gool.ast.core.Operator;
 import gool.ast.core.ParentCall;
 import gool.ast.core.RecognizedDependency;
+import gool.ast.core.Switch;
 import gool.ast.core.Throw;
 import gool.ast.core.ToStringCall;
 import gool.ast.core.Try;
@@ -397,6 +400,7 @@ public class JavaGenerator extends CommonCodeGenerator /*
 
 	@Override
 	public String getCode(Throw throwStatement) {
+		System.out.println("!!!!!");
 		return String.format("throw %s", throwStatement.getExpression());
 	}
 
@@ -482,5 +486,21 @@ public class JavaGenerator extends CommonCodeGenerator /*
 		}
 		return result;
 	}
-
+	
+	@Override
+	public String getCode(Switch s){
+		
+		String out = formatIndented("switch (%s) {" ,s.getVar());
+		for(Case c : s.getListCases()){
+			out += formatIndented(" %1 ", getCode(c));
+		}
+		out +=formatIndented("}");
+		return out;
+	}
+	
+	@Override
+	public String getCode(Case c){
+		String out = formatIndented("case %s : {%1}\n" ,c.getExp(), c.getStatement());
+		return out;
+	}
 }
