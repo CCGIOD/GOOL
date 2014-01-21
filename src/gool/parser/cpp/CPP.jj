@@ -952,12 +952,12 @@ String scope_override()                 :
     ("::")  { name += "::"; }
     (
       LOOKAHEAD(2) t = <ID> ("<" template_argument_list() ">")? "::"
-                   { name += t.image + "::"; jjtn000.value=t.image; }
+                   { name += t.image + "::"; jjtn000.value=name; }
     )*
    |
     (
       LOOKAHEAD(2) t = <ID> ("<" template_argument_list() ">")? "::"
-                   { name += t.image + "::"; jjtn000.value=t.image; }
+                   { name += t.image + "::"; jjtn000.value=name; }
     )+
   )/*@bgen(jjtree)*/
   {

@@ -611,12 +611,12 @@ String scope_override() #SCOPE_OVERRIDE :
     ("::")  { name += "::"; }
     (
       LOOKAHEAD(2) t = <ID> ("<" template_argument_list() ">")? "::"
-                   { name += t.image + "::"; jjtThis.value=t.image; }
+                   { name += t.image + "::"; jjtThis.value=name; }
     )*
    |
     (
       LOOKAHEAD(2) t = <ID> ("<" template_argument_list() ">")? "::"
-                   { name += t.image + "::"; jjtThis.value=t.image; }
+                   { name += t.image + "::"; jjtThis.value=name; }
     )+
   )
   { return name; }

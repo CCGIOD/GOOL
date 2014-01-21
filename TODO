@@ -14,6 +14,7 @@
 	* ajouter les cast en tableau
 	* traiter le for avec des conditions/expressions vides : f(;;)
 	* enum (?)
+	* ajouter f().f() (HARDCORE)
 - Rajouter des interceptions d'erreurs :
 	-> prendre CPP.jjt fonction par fonction
 	-> analyser ce qui l'est possible de faire dans une fonction qui n'est pas traiter et identifier le code correspondant en c++

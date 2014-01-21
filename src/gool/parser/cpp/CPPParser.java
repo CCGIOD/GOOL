@@ -926,7 +926,7 @@ void type_specifier() :
             ;
           }
           jj_consume_token(SCOPE);
-                     name += t.image + "::"; jjtn000.value=t.image;
+                     name += t.image + "::"; jjtn000.value=name;
         }
         break;
       case ID:
@@ -944,7 +944,7 @@ void type_specifier() :
             ;
           }
           jj_consume_token(SCOPE);
-                     name += t.image + "::"; jjtn000.value=t.image;
+                     name += t.image + "::"; jjtn000.value=name;
           if (jj_2_34(2)) {
             ;
           } else {

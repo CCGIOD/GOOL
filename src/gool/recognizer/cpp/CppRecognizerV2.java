@@ -396,7 +396,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(DECLARATION node, Object data) {		
-	
+
 		// Cas d'une déclaration de classe
 		if (testChild(node, JJTCLASS_SPECIFIER))	
 			return returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
@@ -533,7 +533,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(SCOPE_OVERRIDE node, Object data) {
-		return new Identifier (new TypeVar("typevar"),node.jjtGetValue().toString());
+		//return new Identifier (new TypeVar("typevar"),node.jjtGetValue().toString());
+		return node.jjtGetValue().toString();
 	}
 
 	@Override
@@ -1257,7 +1258,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			int nData = 0;
 			if (data != null)
 				nData+=Integer.parseInt(data.toString())+1;
-			
+
 			Operator operator = Operator.PREFIX_INCREMENT;
 			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),nData);
 			if (varPost == null){return null;}
@@ -1267,7 +1268,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			int nData = 0;
 			if (data != null)
 				nData+=Integer.parseInt(data.toString())+1;
-			
+
 			Operator operator = Operator.PREFIX_DECREMENT;
 			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),nData);
 			if (varPost == null){return null;}
@@ -1322,9 +1323,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(POSTFIX_EXPRESSION node, Object data) {
 		if (node.jjtGetValue() != null && ((String) node.jjtGetValue()).compareTo("()") == 0){
-			Identifier name = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);						
-			if (name == null){return null;}
-			MethCall m = new MethCall(new TypeMethod("typemeth"), name.toString());
+			Identifier name = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, "GET_ID_FCT");						
+			MethCall m = new MethCall(new TypeMethod("typemeth"), name);
 			if (node.jjtGetNumChildren() > 1){
 				m.addParameters((List<Expression>) visit((SimpleNode) node.jjtGetChild(1),data));
 			}
@@ -1354,11 +1354,16 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(ID_EXPRESSION node, Object data) {
-		if (node.jjtGetNumChildren() > 0){
-			Identifier id = (Identifier) visit((SimpleNode) node.jjtGetChild(0),data);
+		if (data.toString().compareTo("GET_ID_FCT") == 0){
+			String id = (String) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (id == null){return null;}
-			return new FieldAccess(new TypeVar("typevar"), id, node.jjtGetValue().toString());
+			return new Identifier (new TypeVar("typevar"),id.replaceAll("::",".")+node.jjtGetValue().toString());
 		}
+		else if (node.jjtGetNumChildren() > 0){
+			String id = (String) visit((SimpleNode) node.jjtGetChild(0),data);
+			if (id == null){return null;}
+			Identifier idf = new Identifier (new TypeVar("typevar"),id.replaceAll("::",".").substring(0, id.replaceAll("::",".").length()-1));
+			return new FieldAccess(new TypeVar("typevar"), idf,node.jjtGetValue().toString());		}
 		else
 			return new Identifier (new TypeVar("typevar"),node.jjtGetValue().toString());
 	}
@@ -1429,17 +1434,17 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(INCLUDE_SPECIFER node, Object data) {
-	// TODO: faire le chainage et ajouter le noeud dependancy
+		// TODO: faire le chainage et ajouter le noeud dependancy
 		System.out.println("J'ai remarqué un include standard : " + "[" + ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1) + "]");
 		System.out.println("[CppRecognizer] BEGIN of visitCompilationUnit");
-	    // The destination package is either null or that specified by the
+		// The destination package is either null or that specified by the
 		// visited package
-	    List<Dependency> dependencies = new ArrayList<Dependency>();
+		List<Dependency> dependencies = new ArrayList<Dependency>();
 
-	    // GoolMatcher init call
-	    RecognizerMatcher.init("cpp");
+		// GoolMatcher init call
+		RecognizerMatcher.init("cpp");
 
-	    String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
+		String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
 		if (!RecognizerMatcher.matchImport(dependencyString )) {
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
