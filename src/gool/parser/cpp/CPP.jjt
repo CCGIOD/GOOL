@@ -166,12 +166,12 @@ SKIP :
   "//" : IN_LINE_COMMENT
 |
   "/*" : IN_COMMENT
-  {/*
-  Pour reconaitre les includes
 |
-  "#" : PREPROCESSOR_OUTPUT
-  */
-  }
+  "#ifdef" : PREPROCESSOR_OUTPUT
+|
+  "#ifndef" : PREPROCESSOR_OUTPUT
+|
+  "#endif" : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:
@@ -207,6 +207,7 @@ SKIP :
   |
   < ~[] >
 }
+
 
 TOKEN :
 {
@@ -309,6 +310,7 @@ TOKEN :
 | < TRUETOK: "true" >
 | < FALSETOK: "false" >
 | < THROW: "throw" >
+| < INCLUDE: "#include" >
 }
 
 TOKEN [IGNORE_CASE] :
@@ -334,6 +336,7 @@ TOKEN [IGNORE_CASE] :
               ("e" (["-","+"])? (["0"-"9"])+)? (["f","l"])? >
 
 | <  FLOATTWO : (["0"-"9"])+ "e" (["-","+"])?  (["0"-"9"])+ (["f","l"])? >
+
 }
 
 TOKEN :
@@ -353,6 +356,7 @@ TOKEN :
      )
    )
    "'" >
+| <  PATH_STRING :  "<" (["a"-"z","A"-"Z","0"-"9",".","-","_"," ","/"])+ ">" >
 
 | <  STRING : ("L")? "\""
    ( ( ~["\"","\\","\n","\r"])
@@ -368,20 +372,25 @@ TOKEN :
      )
    )*
    "\"" >
+
 }
 
 SimpleNode translation_unit() #TRANSLATION_UNIT :
 {}
 {
    { sym.OpenScope(null, false); sym.PutTypeName("Test"); }
-   ( LOOKAHEAD(2) external_declaration() )* <EOF>
+	(  LOOKAHEAD(2) external_declaration() )* <EOF>
    { sym.CloseScope(); }
    { return jjtThis; }
 }
 
+
+
 void external_declaration() #EXTERNAL_DECLARATION :
-{ boolean isTypedef = false; }
+{ boolean isTypedef = false;}
 {
+    <INCLUDE> include_specifer()
+   | 
     LOOKAHEAD(("typedef" | template_head())? class_head()  "{")
        ( template_head() )? declaration() 
    |
@@ -418,6 +427,16 @@ void external_declaration() #EXTERNAL_DECLARATION :
     declaration()
    |
     ";"
+}
+
+void include_specifer() #INCLUDE_SPECIFER :
+{
+  Token t;
+}
+{
+
+      t=<PATH_STRING> {jjtThis.value=t.image; }
+    | t=<STRING> {jjtThis.value=t.image; }
 }
 
 void function_definition() #FUNCTION_DEFINITION :
@@ -463,6 +482,7 @@ void linkage_specification() #LINKAGE_SPECIFICATION :
     declaration()
    )
 }
+
 
 void declaration() #DECLARATION :
 { boolean isTypedef = false; }

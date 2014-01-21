@@ -171,7 +171,11 @@ SKIP :
 |
   "/*" : IN_COMMENT
 |
-  "#" : PREPROCESSOR_OUTPUT
+  "#ifdef" : PREPROCESSOR_OUTPUT
+|
+  "#ifndef" : PREPROCESSOR_OUTPUT
+|
+  "#endif" : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:
@@ -207,6 +211,7 @@ SKIP :
   |
   < ~[] >
 }
+
 
 TOKEN :
 {
@@ -309,6 +314,7 @@ TOKEN :
 | < TRUETOK: "true" >
 | < FALSETOK: "false" >
 | < THROW: "throw" >
+| < INCLUDE: "#include" >
 }
 
 TOKEN [IGNORE_CASE] :
@@ -334,6 +340,7 @@ TOKEN [IGNORE_CASE] :
               ("e" (["-","+"])? (["0"-"9"])+)? (["f","l"])? >
 
 | <  FLOATTWO : (["0"-"9"])+ "e" (["-","+"])?  (["0"-"9"])+ (["f","l"])? >
+
 }
 
 TOKEN :
@@ -353,6 +360,7 @@ TOKEN :
      )
    )
    "'" >
+| <  PATH_STRING :  "<" (["a"-"z","A"-"Z","0"-"9",".","-","_"," ","/"])+ ">" >
 
 | <  STRING : ("L")? "\""
    ( ( ~["\"","\\","\n","\r"])
@@ -368,6 +376,7 @@ TOKEN :
      )
    )*
    "\"" >
+
 }
 
 SimpleNode translation_unit()                   :
@@ -381,7 +390,7 @@ SimpleNode translation_unit()                   :
    try {
 /*@egen*/
    { sym.OpenScope(null, false); sym.PutTypeName("Test"); }
-   ( LOOKAHEAD(2) external_declaration() )* <EOF>
+	(  LOOKAHEAD(2) external_declaration() )* <EOF>
    { sym.CloseScope(); }/*@bgen(jjtree)*/
    {
      jjtree.closeNodeScope(jjtn000, true);
@@ -413,16 +422,20 @@ SimpleNode translation_unit()                   :
 /*@egen*/
 }
 
+
+
 void external_declaration()                       :
 {/*@bgen(jjtree) EXTERNAL_DECLARATION */
   EXTERNAL_DECLARATION jjtn000 = new EXTERNAL_DECLARATION(JJTEXTERNAL_DECLARATION);
   boolean jjtc000 = true;
   jjtree.openNodeScope(jjtn000);
   jjtn000.jjtSetFirstToken(getToken(1));
-/*@egen*/ boolean isTypedef = false; }
+/*@egen*/ boolean isTypedef = false;}
 {/*@bgen(jjtree) EXTERNAL_DECLARATION */
     try {
 /*@egen*/
+    <INCLUDE> include_specifer()
+   | 
     LOOKAHEAD(("typedef" | template_head())? class_head()  "{")
        ( template_head() )? declaration() 
    |
@@ -479,6 +492,42 @@ void external_declaration()                       :
         jjtn000.jjtSetLastToken(getToken(0));
       }
     }
+/*@egen*/
+}
+
+void include_specifer()                   :
+{/*@bgen(jjtree) INCLUDE_SPECIFER */
+  INCLUDE_SPECIFER jjtn000 = new INCLUDE_SPECIFER(JJTINCLUDE_SPECIFER);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+  jjtn000.jjtSetFirstToken(getToken(1));
+/*@egen*/
+  Token t;
+}
+{/*@bgen(jjtree) INCLUDE_SPECIFER */
+      try {
+/*@egen*/
+
+      t=<PATH_STRING>/*@bgen(jjtree)*/
+                      {
+                        jjtree.closeNodeScope(jjtn000, true);
+                        jjtc000 = false;
+                        jjtn000.jjtSetLastToken(getToken(0));
+                      }
+/*@egen*/ {jjtn000.value=t.image; }
+    | t=<STRING>/*@bgen(jjtree)*/
+                 {
+                   jjtree.closeNodeScope(jjtn000, true);
+                   jjtc000 = false;
+                   jjtn000.jjtSetLastToken(getToken(0));
+                 }
+/*@egen*/ {jjtn000.value=t.image; }/*@bgen(jjtree)*/
+      } finally {
+        if (jjtc000) {
+          jjtree.closeNodeScope(jjtn000, true);
+          jjtn000.jjtSetLastToken(getToken(0));
+        }
+      }
 /*@egen*/
 }
 
@@ -615,6 +664,7 @@ void linkage_specification()                        :
    }
 /*@egen*/
 }
+
 
 void declaration()              :
 {/*@bgen(jjtree) DECLARATION */

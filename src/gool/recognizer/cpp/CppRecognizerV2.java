@@ -11,9 +11,9 @@ import gool.ast.core.Catch;
 import gool.ast.core.ClassDef;
 import gool.ast.core.ClassNew;
 import gool.ast.core.Constant;
+import gool.ast.core.Dependency;
 import gool.ast.core.DoWhile;
 import gool.ast.core.Expression;
-import gool.ast.core.ExpressionUnknown;
 import gool.ast.core.Field;
 import gool.ast.core.FieldAccess;
 import gool.ast.core.For;
@@ -31,9 +31,9 @@ import gool.ast.core.Return;
 import gool.ast.core.Statement;
 import gool.ast.core.Switch;
 import gool.ast.core.This;
-import gool.ast.core.ThisCall;
 import gool.ast.core.Try;
 import gool.ast.core.UnaryOperation;
+import gool.ast.core.UnrecognizedDependency;
 import gool.ast.core.VarDeclaration;
 import gool.ast.core.While;
 import gool.ast.system.SystemOutDependency;
@@ -51,16 +51,13 @@ import gool.ast.type.TypeVar;
 import gool.ast.type.TypeVoid;
 import gool.generator.GeneratorHelper;
 import gool.generator.common.Platform;
-import gool.generator.cpp.CppPlatform;
 import gool.generator.java.JavaPlatform;
-import gool.generator.python.PythonPlatform;
 import gool.parser.cpp.*;
+import gool.recognizer.common.RecognizerMatcher;
 
 import java.io.FileNotFoundException;
-import java.lang.invoke.VolatileCallSite;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -1418,5 +1415,28 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				listType.add(type);
 		}
 		return listType;
-	}	
+	}
+
+	@Override
+	public Object visit(INCLUDE_SPECIFER node, Object data) {
+	// TODO: faire le chainage et ajouter le noeud dependancy
+		System.out.println("J'ai remarqué un include standard : " + "[" + ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1) + "]");
+		System.out.println("[CppRecognizer] BEGIN of visitCompilationUnit");
+	    // The destination package is either null or that specified by the
+		// visited package
+	    List<Dependency> dependencies = new ArrayList<Dependency>();
+
+	    // GoolMatcher init call
+	    RecognizerMatcher.init("cpp");
+
+	    String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
+		if (!RecognizerMatcher.matchImport(dependencyString )) {
+			dependencies.add(new UnrecognizedDependency(dependencyString));
+		}
+		System.out.println("[CppRecognizer] END of visitCompilationUnit.");
+
+		return null;
+	}
+
+
 }

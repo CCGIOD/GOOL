@@ -6,6 +6,7 @@ public interface CPPParserVisitor
   public Object visit(SimpleNode node, Object data);
   public Object visit(TRANSLATION_UNIT node, Object data);
   public Object visit(EXTERNAL_DECLARATION node, Object data);
+  public Object visit(INCLUDE_SPECIFER node, Object data);
   public Object visit(FUNCTION_DEFINITION node, Object data);
   public Object visit(FUNC_DECL_DEF node, Object data);
   public Object visit(LINKAGE_SPECIFICATION node, Object data);
@@ -109,4 +110,4 @@ public interface CPPParserVisitor
   public Object visit(EXCEPTION_SPEC node, Object data);
   public Object visit(EXCEPTION_LIST node, Object data);
 }
-/* JavaCC - OriginalChecksum=7556ba0e24a1963ea4d2eab6e57525d4 (do not edit this line) */
+/* JavaCC - OriginalChecksum=ee5c769fecf5f0fded2a7950c22ea99e (do not edit this line) */
