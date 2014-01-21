@@ -396,6 +396,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(DECLARATION node, Object data) {		
+	
 		// Cas d'une déclaration de classe
 		if (testChild(node, JJTCLASS_SPECIFIER))	
 			return returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
@@ -1236,8 +1237,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(UNARY_EXPRESSION node, Object data) {
-		if (node.jjtGetChild(0).jjtGetId() == JJTUNARY_EXPRESSION && node.jjtGetChild(0).jjtGetValue() != null)
+		if (Integer.parseInt(data.toString()) > 1){
 			return null;
+		}
 		else if (node.jjtGetChild(0).jjtGetId() == JJTUNARY_OPERATOR && node.jjtGetChild(0).jjtGetValue() != null && node.jjtGetChild(0).jjtGetValue().toString().compareTo("!") == 0){
 			Expression expr = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (expr == null){return null;}
@@ -1252,14 +1254,22 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				return null;
 		}
 		else if (node.jjtGetValue()!=null && ((String) node.jjtGetValue()).compareTo("++")== 0){
+			int nData = 0;
+			if (data != null)
+				nData+=Integer.parseInt(data.toString())+1;
+			
 			Operator operator = Operator.PREFIX_INCREMENT;
-			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
+			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),nData);
 			if (varPost == null){return null;}
 			return new UnaryOperation(operator,varPost, TypeInt.INSTANCE, "++");
 
 		} else if (node.jjtGetValue()!=null && ((String) node.jjtGetValue()).compareTo("--")== 0){
+			int nData = 0;
+			if (data != null)
+				nData+=Integer.parseInt(data.toString())+1;
+			
 			Operator operator = Operator.PREFIX_DECREMENT;
-			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
+			Expression varPost= (Expression) visit((SimpleNode) node.jjtGetChild(0),nData);
 			if (varPost == null){return null;}
 			return new UnaryOperation(operator,varPost, TypeInt.INSTANCE, "--");
 		}
