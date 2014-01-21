@@ -1,4 +1,33 @@
+int i;
+
+
 int main (){
+
+	int i;
+	i++;
+	i++++;
+	i = sizeof pint;
+}
+
+double f (){
+
+}
+
+class A
+{
+	public:
+		void f1 (){
+
+			int i,j,k,o,p;
+			}
+
+	private:
+		int i,j,k;
+		char ddd;
+};
+
+
+/*int main (){
 
 	i=5;
 
@@ -6,17 +35,30 @@ int main (){
 
 
 
-/*class A
+class A
 {
 	public:
-		virtual void f1 ();
+		void f1 (){
+
+			int i,j,k,o,p;
+}
 
 	private:
 		int i,j,k;
 		char ddd;
-};*/
+};
 
-/*int f1 (int i, ...){
+class B : A 
+{
+
+};
+
+class C : A, B
+{
+
+};
+
+int f1 (int i, ...){
 	
 	i=*u;
 
@@ -25,8 +67,10 @@ int main (){
 			i=1;
 			break;
 		}
-		default : {
-		return 0;}
+		default : 
+{
+		return 0;
+}
 	}
 }*/
 
@@ -93,7 +137,7 @@ int i2 [][];*/
 	float j = (float) 5;
 
 	char* str;
-	char* str="BITE";
+	char* str=" n n";
 
 	int a [];
 	int b [5];

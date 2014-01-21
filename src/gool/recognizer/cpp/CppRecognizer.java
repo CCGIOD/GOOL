@@ -76,9 +76,9 @@ public class CppRecognizer implements CPPParserTreeConstants {
 	private Collection<ClassDef> goolClasses = new ArrayList<ClassDef> ();
 
 	// Langage output (fixé à JAVA pour les tests)
-	private Platform defaultPlatform = JavaPlatform.getInstance();
+	//private Platform defaultPlatform = JavaPlatform.getInstance();
 	//private Platform defaultPlatform = CppPlatform.getInstance();
-	//private Platform defaultPlatform = PythonPlatform.getInstance();
+	private Platform defaultPlatform = PythonPlatform.getInstance();
 
 	// Getter sur L'AST GOOL
 	public final Collection<ClassDef> getGoolClasses() {

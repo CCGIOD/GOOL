@@ -1,0 +1,38 @@
+<C++ EN INPUT>
+
+- Ajouter la gestion de 2 fichiers en entrée : un fichier .h et un .cpp en input qui se complètent (2 ou +)
+- Rajouter dans la reconnaissance : 
+	* template (?)
+	* free sur un classe (-> classFree)
+	* constructor
+	* enhancedForLoop
+	* parent call ( ex : A herite de B et dans B : B::fct(); )
+	* static class 
+	* list and map (?)
+	* ajouter des tests sur le main pour reconnaitre que le vrai : int main( int argc, const char* argv[] )
+	* ajouter les cast en tableau
+	* traiter le for avec des conditions/expressions vides : f(;;)
+	* enum (?)
+- Rajouter des interceptions d'erreurs :
+	-> prendre CPP.jjt fonction par fonction
+	-> analyser ce qui l'est possible de faire dans une fonction qui n'est pas traiter et identifier le code correspondant en c++
+	-> tester ce code :
+		=> soit le code n'est pas reconnu et il y a un message d'erreur : OK
+		=> soit le code est partiellement interprété sans message d'erreur (ex : i++; devient i;) : ajouter un traitement de l'erreur
+	==> Erreur à traiter à identifier :
+		* <i = sizeof pint;> donne <i = pint;>
+- Ajouter une gestion de fichiers en entrée (pour l'instant on peut seulement utiliser le fichier test.cpp fixé)
+- Ajouter la  gestion de "#include" pour créer une librairie GOOL.
+- Finaliser le CPP.jjt et séparer les classes de types NODE et le reste (option "prefix" et/ou option "directory")
+- FAIRE DES TESTS POUR CHASSER LES BUGS /!\
+  LISTE DES BUGS CONNUS à CORRIGER :
+	* i = sizeof(int)
+
+
+<SOUTENANCE>
+
+- Fichiers tests fonctionnels pour la soutenance (ex: fibo, classe Printer, etc ...)
+- Schéma sur l'AST C++
+- Schéma sur les transformations 
+- Script bash de démo
+

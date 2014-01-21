@@ -399,6 +399,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(DECLARATION node, Object data) {		
+	
 		// Cas d'une déclaration de classe
 		if (testChild(node, JJTCLASS_SPECIFIER))	
 			return returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
