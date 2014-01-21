@@ -7,6 +7,7 @@
 	* constructor
 	* enhancedForLoop
 	* parent call ( ex : A herite de B et dans B : B::fct(); )
+	* appel de méthode : t.f() et static Test::f()
 	* static class 
 	* list and map (?)
 	* ajouter des tests sur le main pour reconnaitre que le vrai : int main( int argc, const char* argv[] )
