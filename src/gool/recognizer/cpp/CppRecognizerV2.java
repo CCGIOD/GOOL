@@ -1077,12 +1077,39 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			return new While (condWhile,stWhile);
 		}
 	else if (((String) node.jjtGetValue()).compareTo("for")== 0){
-			
-			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()>1){
-				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
+			System.out.println(node.jjtGetChild(0).jjtGetChild(0).jjtGetNumChildren());
+			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()!=1){
+				Statement stFor=null;
+				Statement initFor=null;
+				Expression condFor=null;
+				Statement updater = null;
+				
+				for (int i=0;i<node.jjtGetNumChildren()-1;i++){
+					
+					try{
+							if(((String)node.jjtGetChild(i).jjtGetChild(0).jjtGetValue()).compareTo("=")==0){
+								initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
+								if (initFor == null)
+									getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+								System.out.println(initFor);
+							} 
+					}
+					catch(Exception e){}
+					try{					
+						Expression test = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
+						if((test.getType()).equals(TypeBool.INSTANCE)){
+							condFor=test;
+						} else if((test.getType()).equals(TypeInt.INSTANCE)){
+							updater=(Statement)test;
+						}
+					}
+					catch(Exception e){}
+				}
+				stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
-				return new For(null,null,null,stFor);
+				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
+									
+				return new For(initFor,condFor,updater,stFor);
 			} 
 			else if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()==1){
 				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
