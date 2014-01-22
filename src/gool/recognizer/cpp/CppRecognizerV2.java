@@ -350,8 +350,11 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(TRANSLATION_UNIT node, Object data) {
-		ClassDef unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
-		goolClasses.add(unitaryClass);
+		ClassDef unitaryClass = classExist(node.jjtGetValue().toString());
+		if (unitaryClass == null){
+			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
+			goolClasses.add(unitaryClass);
+		}
 		stackClassActives.push(unitaryClass);
 		node.childrenAccept(this, data);
 		return null;
