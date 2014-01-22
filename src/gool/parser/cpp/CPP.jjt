@@ -196,6 +196,8 @@ SKIP :
   "#ifndef" : PREPROCESSOR_OUTPUT
 |
   "#endif" : PREPROCESSOR_OUTPUT
+|
+  "#define" : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:

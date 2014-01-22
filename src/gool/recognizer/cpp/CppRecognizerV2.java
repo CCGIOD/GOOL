@@ -175,7 +175,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	private String createClassNameFromFilename(Object o){
 		String filename = (String) o;
-		String className = filename.split("\\.")[0].toLowerCase();		
+		String className = filename.split("\\.")[0];		
 		return className.substring(0, 1).toUpperCase() + className.substring(1);
 	}
 
@@ -350,8 +350,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(TRANSLATION_UNIT node, Object data) {
-		ClassDef unitaryClass = classExist(node.jjtGetValue().toString());
+		ClassDef unitaryClass = classExist(createClassNameFromFilename(node.jjtGetValue()));
 		if (unitaryClass == null){
+			System.out.println(node.jjtGetValue()+" ok");
 			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
 			goolClasses.add(unitaryClass);
 		}
@@ -1583,19 +1584,20 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public Object visit(INCLUDE_SPECIFER node, Object data) {
 		// TODO: faire le chainage et ajouter le noeud dependancy
 		System.out.println("J'ai remarqué un include standard : " + "[" + ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1) + "]");
-		System.out.println("[CppRecognizer] BEGIN of visitCompilationUnit");
+		System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
 		// The destination package is either null or that specified by the
 		// visited package
 		List<Dependency> dependencies = new ArrayList<Dependency>();
 
 		// GoolMatcher init call
-		RecognizerMatcher.init("cpp");
 
 		String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
 		if (!RecognizerMatcher.matchImport(dependencyString )) {
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
-		System.out.println("[CppRecognizer] END of visitCompilationUnit.");
+		stackClassActives.peek().addDependencies(dependencies);
+		
+		System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
 
 		return null;
 	}
