@@ -5539,23 +5539,22 @@ void type_specifier() :
             break;
           case PLUSPLUS:
             jj_consume_token(PLUSPLUS);
-           jjtn000.value="++";
+           jjtn000.value="++"; c++;
             break;
           case MINUSMINUS:
             jj_consume_token(MINUSMINUS);
-           jjtn000.value="--";
+           jjtn000.value="--"; c++;
             break;
           default:
             jj_la1[118] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
-      c++;
         }
-                 jjtree.closeNodeScope(jjtn000, true);
-                 jjtc000 = false;
-                 jjtn000.jjtSetLastToken(getToken(0));
-                if (c > 1){ jjtn000.value="ERROR";}
+          jjtree.closeNodeScope(jjtn000, true);
+          jjtc000 = false;
+          jjtn000.jjtSetLastToken(getToken(0));
+         if (c > 1){ jjtn000.value="ERROR";}
       } else if (jj_2_130(1)) {
         simple_type_specifier();
         jj_consume_token(LPARENTHESIS);

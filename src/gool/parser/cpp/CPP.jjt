@@ -1536,10 +1536,10 @@ void postfix_expression() #POSTFIX_EXPRESSION :
     |
      "->" id_expression()
     |
-     "++" {jjtThis.value="++";}
+     "++" {jjtThis.value="++"; c++;}
     |
-     "--" {jjtThis.value="--";})
-     {c++;} )* {if (c > 1){ jjtThis.value="ERROR";} }
+     "--" {jjtThis.value="--"; c++;})
+     )* {if (c > 1){ jjtThis.value="ERROR";} }
   |
    simple_type_specifier() "(" ( expression_list() )? ")"
 }

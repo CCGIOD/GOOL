@@ -4511,15 +4511,15 @@ void postfix_expression()                     :
     |
      "->" id_expression()
     |
-     "++" {jjtn000.value="++";}
+     "++" {jjtn000.value="++"; c++;}
     |
-     "--" {jjtn000.value="--";})
-     {c++;} )*/*@bgen(jjtree)*/
-               {
-                 jjtree.closeNodeScope(jjtn000, true);
-                 jjtc000 = false;
-                 jjtn000.jjtSetLastToken(getToken(0));
-               }
+     "--" {jjtn000.value="--"; c++;})
+     )*/*@bgen(jjtree)*/
+        {
+          jjtree.closeNodeScope(jjtn000, true);
+          jjtc000 = false;
+          jjtn000.jjtSetLastToken(getToken(0));
+        }
 /*@egen*/ {if (c > 1){ jjtn000.value="ERROR";} }
   |
    simple_type_specifier() "(" ( expression_list() )? ")"/*@bgen(jjtree)*/

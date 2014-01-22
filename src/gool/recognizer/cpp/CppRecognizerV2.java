@@ -12,6 +12,7 @@ import gool.ast.core.ClassDef;
 import gool.ast.core.ClassNew;
 import gool.ast.core.CompoundAssign;
 import gool.ast.core.Constant;
+import gool.ast.core.Constructor;
 import gool.ast.core.Dependency;
 import gool.ast.core.DoWhile;
 import gool.ast.core.Expression;
@@ -70,7 +71,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	// AST produit par le parser C++
 	private List<SimpleNode> AST;
-	
+
 	// Collection des classes <=> AST GOOL
 	private Collection<ClassDef> goolClasses = new ArrayList<ClassDef> ();
 
@@ -316,7 +317,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			return new ArrayAccess(getListDim(node, i-1, data), index);
 		}
 	}
-	
+
 	private Object setMethActive (String className, String name){
 		Iterator<ClassDef> it = goolClasses.iterator();
 		while (it.hasNext()){
@@ -376,7 +377,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			methActive=null;
 			return RETURN_OK;
 		}
-		
+
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, "GET_TYPE");
 		if (type == null){return null;}
 		if (testChild((SimpleNode) node.jjtGetChild(1), JJTPTR_OPERATOR,"*")){
@@ -691,9 +692,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		if (testChild(node, JJTACCESS_SPECIFIER)){
 			accesModifierActive=convertModToGoolMod((String) returnChild(JJTACCESS_SPECIFIER, node, 0, data));
 		}
-		else if (!testChild(node, JJTFUNCTION_DEFINITION)){
+		else if (testChild(node, JJTDTOR_DEFINITION)){
+			if (visit((SimpleNode) node.jjtGetChild(0),data) == null){return null;}
+		}
+		else if (node.jjtGetNumChildren() > 0 && node.jjtGetChild(0).jjtGetId() == JJTDECLARATION_SPECIFIERS){
 
-			Collection <Modifier> cm = (Collection <Modifier>) visit((DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
+			Collection <Modifier> cm = (Collection <Modifier>) returnChild(JJTDECLARATION_SPECIFIERS,node,0,"GET_MODIFIERS");
 			if (cm == null){cm = new ArrayList<Modifier>();}				
 			IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, "GET_TYPE");
 			if (type == null){return null;}
@@ -714,10 +718,16 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				stackClassActives.peek().addField(new Field(cm, name, type, null));
 			}
 		}
+		else if (testChild(node, JJTFUNCTION_DEFINITION)) {
+			if (visit((SimpleNode) node.jjtGetChild(0),data) == null){return null;}
+		}
 		else {
-			visit((SimpleNode) node.jjtGetChild(0),data);
+			System.out.println("ok");
+			getUnrocognizedPart(((SimpleNode) node).jjtGetFirstToken(), ((SimpleNode) node).jjtGetLastToken());
+			return null;
 		}
 		return RETURN_OK;
+
 	}
 
 	@Override
@@ -840,8 +850,19 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(DTOR_DEFINITION node, Object data) {
+		Constructor c = new Constructor();
+		if (testChild(node, JJTPARAMETER_LIST)){
+			List<VarDeclaration> listVD = (List<VarDeclaration>) returnChild(JJTDTOR_DECLARATOR, node, 1, "GET_PARAMS");
+			if (listVD == null){listVD=new ArrayList<VarDeclaration>();}
+			for (VarDeclaration vd : listVD)
+				c.addParameter(vd);
+		}
 
-		return null;
+		stackClassActives.peek().addMethod(c);
+		methActive=c;
+		visit((COMPOUND_STATEMENT) node.jjtGetChild(2), data);
+		methActive=null;
+		return RETURN_OK;
 	}
 
 	@Override
@@ -876,14 +897,16 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(DTOR_DECLARATOR node, Object data) {
-
-		return null;
+		if (node.jjtGetNumChildren() > 1)
+			return null;
+		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
 	public Object visit(SIMPLE_DTOR_DECLARATOR node, Object data) {
-
-		return null;
+		if (node.jjtGetNumChildren() > 1)
+			return null;
+		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
@@ -1069,15 +1092,15 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(ITERATION_STATEMENT node, Object data) {
-	if (((String) node.jjtGetValue()).compareTo("while")== 0){
+		if (((String) node.jjtGetValue()).compareTo("while")== 0){
 			Expression condWhile = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (condWhile == null){return null;}
 			Statement stWhile = (Statement) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (stWhile == null){stWhile=new Block();}
 			return new While (condWhile,stWhile);
 		}
-	else if (((String) node.jjtGetValue()).compareTo("for")== 0){
-			
+		else if (((String) node.jjtGetValue()).compareTo("for")== 0){
+
 			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()>1){
 				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
@@ -1090,36 +1113,36 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
 				return new For(null,null,null,stFor);
 			}
-			
+
 			else {
-			
+
 				Statement initFor = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
 				if (initFor == null)
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(0)).jjtGetLastToken());
-	
+
 				Expression condFor = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 				if (condFor == null)
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1)).jjtGetLastToken());
-	
+
 				Statement updater = (Statement) visit((SimpleNode) node.jjtGetChild(2),data);
 				if (updater == null)
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(2)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(2)).jjtGetLastToken());
-	
+
 				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(3),data);
 				if (stFor == null)
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(3)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(3)).jjtGetLastToken());
-	
+
 				return new For(initFor,condFor,updater,stFor);
-		}
 			}
-	else if (((String) node.jjtGetValue()).compareTo("dowhile")== 0){
+		}
+		else if (((String) node.jjtGetValue()).compareTo("dowhile")== 0){
 			Expression condDo = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (condDo == null){return null;}		
 			Statement stDo = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (stDo == null){return null;}				
 			return new DoWhile(stDo,condDo);
 		}
-	else
+		else
 			return null;
 	}
 
@@ -1193,7 +1216,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(ASSIGNMENT_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren()>1){
-			
+
 			Node varAss = (Node) visit((SimpleNode) node.jjtGetChild(0),data);
 			Expression expAss = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (((String) node.jjtGetValue()).compareTo("=")== 0){
@@ -1207,21 +1230,21 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
 			}
 			else if (((String) node.jjtGetValue()).compareTo("-=")== 0){
-				
+
 				Operator operator = Operator.MINUS;
 				String textualoperator = "-";
 				if (varAss == null || expAss == null){return null;}
 				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
 			}
 			else if (((String) node.jjtGetValue()).compareTo("*=")== 0){
-				
+
 				Operator operator = Operator.MULT;
 				String textualoperator = "*";
 				if (varAss == null || expAss == null){return null;}
 				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
 			}
 			else if (((String) node.jjtGetValue()).compareTo("/=")== 0){
-				
+
 				Operator operator = Operator.NOT;
 				String textualoperator = "";
 				if (varAss == null || expAss == null){return null;}
@@ -1342,7 +1365,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(UNARY_EXPRESSION node, Object data) {
-		if (Integer.parseInt(data.toString()) > 1){
+		if (!data.toString().startsWith("GET_") && Integer.parseInt(data.toString()) > 1){
 			return null;
 		}
 		else if (node.jjtGetChild(0).jjtGetId() == JJTUNARY_OPERATOR && node.jjtGetChild(0).jjtGetValue() != null && node.jjtGetChild(0).jjtGetValue().toString().compareTo("!") == 0){
@@ -1458,7 +1481,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(ID_EXPRESSION node, Object data) {
-		if (data.toString().compareTo("GET_ID_FCT") == 0){
+		if (data.toString().compareTo("GET_ID_FCT") == 0 && node.jjtGetNumChildren() > 0){
 			String id = (String) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (id == null){return null;}
 			return new Identifier (new TypeVar("typevar"),id.replaceAll("::",".")+node.jjtGetValue().toString());

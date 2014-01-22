@@ -3,7 +3,6 @@
 - Rajouter dans la reconnaissance : 
 	* template (?)
 	* free sur un classe (-> classFree)
-	* constructor
 	* enhancedForLoop : for (int i : list){}
 	* parent call ( ex : A herite de B et dans B : B::fct(); )
 	* static class 
