@@ -2084,7 +2084,7 @@ void type_specifier() :
              jjtree.closeNodeScope(jjtn000, true);
              jjtc000 = false;
              jjtn000.jjtSetLastToken(getToken(0));
-             sym.PutTypeName(t.image);
+             sym.PutTypeName(t.image); jjtn000.value=t.image;
         break;
       default:
         jj_la1[55] = jj_gen;
@@ -2158,12 +2158,12 @@ void type_specifier() :
 
   static final public void enumerator() throws ParseException {
  /*@bgen(jjtree) ENUMERATOR */
-  ENUMERATOR jjtn000 = new ENUMERATOR(JJTENUMERATOR);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-  jjtn000.jjtSetFirstToken(getToken(1));
+ ENUMERATOR jjtn000 = new ENUMERATOR(JJTENUMERATOR);
+ boolean jjtc000 = true;
+ jjtree.openNodeScope(jjtn000);
+ jjtn000.jjtSetFirstToken(getToken(1));Token t;
     try {
-      jj_consume_token(ID);
+      t = jj_consume_token(ID);
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case ASSIGNEQUAL:
         jj_consume_token(ASSIGNEQUAL);
@@ -2173,6 +2173,10 @@ void type_specifier() :
         jj_la1[57] = jj_gen;
         ;
       }
+                                         jjtree.closeNodeScope(jjtn000, true);
+                                         jjtc000 = false;
+                                         jjtn000.jjtSetLastToken(getToken(0));
+                                        jjtn000.value=t.image;
     } catch (Throwable jjte000) {
      if (jjtc000) {
        jjtree.clearNodeScope(jjtn000);
@@ -10142,6 +10146,12 @@ void type_specifier() :
     return false;
   }
 
+  static private boolean jj_3R_380() {
+    if (jj_scan_token(ASSIGNEQUAL)) return true;
+    if (jj_3R_87()) return true;
+    return false;
+  }
+
   static private boolean jj_3R_369() {
     if (jj_scan_token(COMMA)) return true;
     if (jj_3R_191()) return true;
@@ -10164,12 +10174,6 @@ void type_specifier() :
   static private boolean jj_3R_192() {
     if (jj_scan_token(AMPERSAND)) return true;
     if (jj_3R_258()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_380() {
-    if (jj_scan_token(ASSIGNEQUAL)) return true;
-    if (jj_3R_87()) return true;
     return false;
   }
 

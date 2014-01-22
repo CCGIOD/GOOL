@@ -12,6 +12,18 @@ class A
 
 };
 
+static class B
+{
+
+};
+
+enum Color
+   {
+      RED,
+      BLUE,
+      WHITE
+   };
+
 int v1=5,v2,v3=4;
 int v4;
 int v5=1000+1;

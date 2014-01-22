@@ -871,7 +871,7 @@ void enum_specifier() #ENUM_SPECIFIER :
     "{" enumerator_list() "}"
    |
     t=<ID> (LOOKAHEAD(2) "{" enumerator_list() "}")?
-           { sym.PutTypeName(t.image); }
+           { sym.PutTypeName(t.image); jjtThis.value=t.image; }
    )
 }
 
@@ -882,9 +882,9 @@ void enumerator_list() #ENUMERATOR_LIST :
 }
 
 void enumerator() #ENUMERATOR :
-{}
+{Token t;}
 {
-   <ID> ("=" constant_expression())?
+   t=<ID> ("=" constant_expression())? {jjtThis.value=t.image;}
 }
 
 void ptr_operator() #PTR_OPERATOR :

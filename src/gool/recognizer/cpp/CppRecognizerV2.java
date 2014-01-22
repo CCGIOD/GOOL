@@ -647,6 +647,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		if (cd == null){
 			cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
 
+			if (testChild((SimpleNode) node.jjtGetParent(), JJTSTORAGE_CLASS_SPECIFIER))
+				cd.addModifier(Modifier.STATIC);
+
 			stackClassActives.push(cd);
 			if (testChild(node, JJTBASE_CLAUSE)){
 				if (returnChild(JJTBASE_CLAUSE, node, 0, data) == null){return null;}
@@ -750,19 +753,32 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(ENUM_SPECIFIER node, Object data) {
 
-		return null;
+		ClassDef cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
+		cd.addMethod(new Constructor());
+		cd.setIsEnum(true);
+		stackClassActives.push(cd);
+		goolClasses.add(cd);
+		node.childrenAccept(this, node.jjtGetValue());
+		stackClassActives.pop();
+		return RETURN_OK;
 	}
 
 	@Override
 	public Object visit(ENUMERATOR_LIST node, Object data) {
-
-		return null;
+		for (int i=0;i<node.jjtGetNumChildren();i++){
+			if (visit((SimpleNode) node.jjtGetChild(i), data) == null)
+				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+		}
+		return RETURN_OK;
 	}
 
 	@Override
 	public Object visit(ENUMERATOR node, Object data) {
-
-		return null;
+		Field f = new Field(node.jjtGetValue().toString(),new TypeClass(data.toString()),new ClassNew(new TypeClass(data.toString())));
+		f.addModifier(Modifier.STATIC);
+		f.addModifier(Modifier.FINAL);
+		stackClassActives.peek().addField(f);
+		return RETURN_OK;
 	}
 
 	@Override
@@ -1365,7 +1381,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(UNARY_EXPRESSION node, Object data) {
-		if (!data.toString().startsWith("GET_") && Integer.parseInt(data.toString()) > 1){
+		if (node.jjtGetChild(0).jjtGetId() == JJTTYPE_NAME)
+			return null;
+		else if (!data.toString().startsWith("GET_") && Integer.parseInt(data.toString()) > 1){
 			return null;
 		}
 		else if (node.jjtGetChild(0).jjtGetId() == JJTUNARY_OPERATOR && node.jjtGetChild(0).jjtGetValue() != null && node.jjtGetChild(0).jjtGetValue().toString().compareTo("!") == 0){
@@ -1401,7 +1419,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			if (varPost == null){return null;}
 			return new UnaryOperation(operator,varPost, TypeInt.INSTANCE, "--");
 		}
-		else if (node.jjtGetNumChildren() == 1)
+		else if (node.jjtGetNumChildren() == 1 && node.jjtGetValue() != null)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
