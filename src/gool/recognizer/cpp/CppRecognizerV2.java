@@ -1120,7 +1120,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		}
 
 	else if (((String) node.jjtGetValue()).compareTo("for")== 0){
-			System.out.println(node.jjtGetChild(0).jjtGetChild(0).jjtGetNumChildren());
+			
 			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()!=1){
 				Statement stFor=null;
 				Statement initFor=null;
@@ -1134,7 +1134,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 								initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
 								if (initFor == null)
 									getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
-								System.out.println(initFor);
+								
 							} 
 					}
 					catch(Exception e){}
