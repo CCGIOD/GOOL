@@ -58,7 +58,8 @@ public class Scope {
      * Checks if a given name is the name of a type in this scope.
      */
     public boolean IsTypeName(String name) {
-        return typeTable.get(name) != null;
+        //return typeTable.get(name) != null;
+	return true;
     }
 
     public Scope GetScope(String name) {

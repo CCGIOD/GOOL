@@ -725,7 +725,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			if (visit((SimpleNode) node.jjtGetChild(0),data) == null){return null;}
 		}
 		else {
-			System.out.println("ok");
 			getUnrocognizedPart(((SimpleNode) node).jjtGetFirstToken(), ((SimpleNode) node).jjtGetLastToken());
 			return null;
 		}

@@ -31,7 +31,7 @@ public class ClassScope extends Scope {
      * scopes also.
      */
     public boolean IsTypeName(String name) {
-        if (super.IsTypeName(name))
+        /*if (super.IsTypeName(name))
             return true;
 
         if (superClasses == null)
@@ -41,7 +41,8 @@ public class ClassScope extends Scope {
             if (((Scope) superClasses.elementAt(i)).IsTypeName(name))
                 return true;
 
-        return false;
+        return false;*/
+	return true;
     }
 
     /**
