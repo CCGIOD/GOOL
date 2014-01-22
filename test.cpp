@@ -1,7 +1,5 @@
 int main(){
-for (;;){
-	return 1;
-	}
+i+=5;
 }
 
 /*int i;

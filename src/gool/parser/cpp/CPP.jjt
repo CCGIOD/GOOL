@@ -1311,17 +1311,17 @@ void assignment_expression() #ASSIGNMENT_EXPRESSION :
 {}
 {
     conditional_expression()
-    (("="
-   | "*="
-   | "/="
-   | "%="
-   | "+="
-   | "-="
-   | "<<="
-   | ">>="
-   | "&="
-   | "^="
-   | "|="
+    (("=" {jjtThis.value="=";}
+   | "*=" {jjtThis.value="*=";}
+   | "/=" {jjtThis.value="/=";}
+   | "%=" {jjtThis.value="%=";}
+   | "+=" {jjtThis.value="+=";}
+   | "-=" {jjtThis.value="-=";}
+   | "<<=" {jjtThis.value="<<=";}
+   | ">>=" {jjtThis.value=">>=";}
+   | "&=" {jjtThis.value="&=";}
+   | "^=" {jjtThis.value="^=";}
+   | "|=" {jjtThis.value="|=";}
    )
    assignment_expression()
    )?

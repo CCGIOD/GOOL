@@ -3602,17 +3602,17 @@ void assignment_expression()                        :
     try {
 /*@egen*/
     conditional_expression()
-    (("="
-   | "*="
-   | "/="
-   | "%="
-   | "+="
-   | "-="
-   | "<<="
-   | ">>="
-   | "&="
-   | "^="
-   | "|="
+    (("=" {jjtn000.value="=";}
+   | "*=" {jjtn000.value="*=";}
+   | "/=" {jjtn000.value="/=";}
+   | "%=" {jjtn000.value="%=";}
+   | "+=" {jjtn000.value="+=";}
+   | "-=" {jjtn000.value="-=";}
+   | "<<=" {jjtn000.value="<<=";}
+   | ">>=" {jjtn000.value=">>=";}
+   | "&=" {jjtn000.value="&=";}
+   | "^=" {jjtn000.value="^=";}
+   | "|=" {jjtn000.value="|=";}
    )
    assignment_expression()
    )?/*@bgen(jjtree)*/
