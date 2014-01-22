@@ -196,6 +196,8 @@ SKIP :
   "#ifndef" : PREPROCESSOR_OUTPUT
 |
   "#endif" : PREPROCESSOR_OUTPUT
+|
+  "#define" : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:
@@ -871,7 +873,7 @@ void enum_specifier() #ENUM_SPECIFIER :
     "{" enumerator_list() "}"
    |
     t=<ID> (LOOKAHEAD(2) "{" enumerator_list() "}")?
-           { sym.PutTypeName(t.image); }
+           { sym.PutTypeName(t.image); jjtThis.value=t.image; }
    )
 }
 
@@ -882,9 +884,9 @@ void enumerator_list() #ENUMERATOR_LIST :
 }
 
 void enumerator() #ENUMERATOR :
-{}
+{Token t;}
 {
-   <ID> ("=" constant_expression())?
+   t=<ID> ("=" constant_expression())? {jjtThis.value=t.image;}
 }
 
 void ptr_operator() #PTR_OPERATOR :
@@ -1536,10 +1538,10 @@ void postfix_expression() #POSTFIX_EXPRESSION :
     |
      "->" id_expression()
     |
-     "++" {jjtThis.value="++";}
+     "++" {jjtThis.value="++"; c++;}
     |
-     "--" {jjtThis.value="--";})
-     {c++;} )* {if (c > 1){ jjtThis.value="ERROR";} }
+     "--" {jjtThis.value="--"; c++;})
+     )* {if (c > 1){ jjtThis.value="ERROR";} }
   |
    simple_type_specifier() "(" ( expression_list() )? ")"
 }
