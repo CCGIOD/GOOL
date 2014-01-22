@@ -86,14 +86,14 @@ public class CppRecognizer implements CPPParserTreeConstants {
 	}
 
 	// Constructeur
-	public CppRecognizer (){
+	/*public CppRecognizer (){
 		this.AST= CPPParser.getCppAST();
 	}
 
 	// Getter sur l'ast c++
 	public SimpleNode getAST (){
 		return AST;
-	}
+	}*/
 
 	// Pointeurs sur la "classe active",
 	//ie la classe à laquelle les éléments qui sont en trian d'être visités appartiennent
@@ -103,7 +103,7 @@ public class CppRecognizer implements CPPParserTreeConstants {
 	private Modifier accesModifierActive = Modifier.PUBLIC;
 
 	// Fonction Main qui parse un fichier test (fixe), construit un AST GOOL et affiche l'output en JAVA dans la console
-	public static void main (String args[]){
+	/*public static void main (String args[]){
 		CppRecognizer cppr = new CppRecognizer();
 
 		try{
@@ -115,7 +115,7 @@ public class CppRecognizer implements CPPParserTreeConstants {
 		try {
 			GeneratorHelper.printClassDefs(cppr.getGoolClasses()); // println rajouté dans gool.generator.common.CodePrinter
 		} catch (FileNotFoundException e) {}
-	}
+	}*/
 
 	// Fonction principale qui visite l'ast c++ : a developper
 	public Object constructGoolAst (SimpleNode node){

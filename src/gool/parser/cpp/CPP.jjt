@@ -78,22 +78,46 @@ public final class CPPParser {
     }
   }
 
-	public static SimpleNode getCppAST (){
-		CPPParser parser;
+	public static java.util.List<SimpleNode> getCppAST (){
+		CPPParser parser  = null;
 		java.io.InputStream input;
-		String filename = "test.cpp";
-		try {
-			input = new java.io.FileInputStream(filename);
-			parser = new CPPParser(input);
-			SimpleNode ast = translation_unit();
-			ast.jjtSetValue(filename);
-			return ast;	 
-		} catch (java.io.FileNotFoundException e) {
-			return null;
-		} catch (ParseException e) {
-      		System.out.println(e.toString());
-			return null;
+		java.util.List<SimpleNode> toReturn = new java.util.ArrayList<SimpleNode>();
+		java.io.File rep = new java.io.File("GOOLINPUTCPP/");
+		String [] listefichiers=rep.list();
+		java.util.Arrays.sort(listefichiers, new java.util.Comparator<String>() {
+                    @Override public int compare(String s1, String s2) {
+                        if (s1.compareTo(s2) == 0)
+                        	return 0;
+                        else if (s1.endsWith(".h"))
+                        	return -1;
+                        else
+                        	return 1;
+                    }           
+                });
+		boolean first = true;
+		for(int i=0;i<listefichiers.length;i++){ 
+			if(listefichiers[i].endsWith(".cpp") || listefichiers[i].endsWith(".h")){
+				String filename = listefichiers[i];
+				try {
+					input = new java.io.FileInputStream("GOOLINPUTCPP/"+filename);
+					if (first){
+						parser = new CPPParser(input);
+						first=false;
+						}
+					else
+                    	parser.ReInit(input);
+					SimpleNode ast = translation_unit();
+					ast.jjtSetValue(filename);
+					toReturn.add(ast);	 
+				} catch (java.io.FileNotFoundException e) {
+					return null;
+				} catch (ParseException e) {
+      				System.out.println(e.toString());
+					return null;
+				}
+			}
 		}		
+		return toReturn;	
 	}
 
   /**

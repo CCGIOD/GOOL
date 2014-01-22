@@ -1,18 +1,19 @@
 <C++ EN INPUT>
 
-- Ajouter la gestion de 2 fichiers en entrée : un fichier .h et un .cpp en input qui se complètent (2 ou +)
 - Rajouter dans la reconnaissance : 
 	* template (?)
 	* free sur un classe (-> classFree)
 	* constructor
-	* enhancedForLoop
+	* enhancedForLoop : for (int i : list){}
 	* parent call ( ex : A herite de B et dans B : B::fct(); )
-	* appel de méthode : t.f() et static Test::f()
 	* static class 
 	* list and map (?)
 	* ajouter des tests sur le main pour reconnaitre que le vrai : int main( int argc, const char* argv[] )
-	* ajouter les cast en tableau
-	* traiter le for avec des conditions/expressions vides : f(;;)
+	* ajouter les cast en tableau :
+			-> int i = (double) k;
+			-> int i = (double []) k;
+				=> donne la même chose : ((Double) (k));	
+	* traiter le for avec des conditions/expressions semi-vides : for (;i<5;) ou for (;;i++) etc ...
 	* enum (?)
 	* ajouter f().f() (HARDCORE)
 - Rajouter des interceptions d'erreurs :

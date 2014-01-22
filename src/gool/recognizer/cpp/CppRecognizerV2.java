@@ -59,6 +59,7 @@ import gool.recognizer.common.RecognizerMatcher;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -68,8 +69,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public final int RETURN_OK = 1;
 
 	// AST produit par le parser C++
-	private SimpleNode AST;
-
+	private List<SimpleNode> AST;
+	
 	// Collection des classes <=> AST GOOL
 	private Collection<ClassDef> goolClasses = new ArrayList<ClassDef> ();
 
@@ -97,19 +98,23 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	// Getter sur l'ast c++
-	public SimpleNode getAST (){
+	public List<SimpleNode> getAST (){
 		return AST;
 	}
 
 	public static void main (String args[]){
 		CppRecognizerV2 cppr = new CppRecognizerV2();
+		List<SimpleNode> ast;
 
 		try{
-			cppr.getAST().dump(""); // affiche l'ast c++
+			ast = cppr.getAST();
+			for (SimpleNode a : ast)
+				a.dump("");
 		}
 		catch (Exception e){return;}
 
-		cppr.visit(cppr.getAST(), 0);
+		for (SimpleNode a : ast)
+			cppr.visit(a, 0);
 		try {
 			GeneratorHelper.printClassDefs(cppr.getGoolClasses());
 		} catch (FileNotFoundException e) {}
@@ -154,7 +159,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	private Object returnChild (int typeNode, SimpleNode node, int pos, Object data){
-		if (node.jjtGetChild(pos).jjtGetId() != typeNode)
+		if (node.jjtGetNumChildren() < pos+1)
+			return null;
+		else if (node.jjtGetChild(pos).jjtGetId() != typeNode)
 			return null;
 		else
 			return visit((SimpleNode) node.jjtGetChild(pos), data);
@@ -309,6 +316,34 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			return new ArrayAccess(getListDim(node, i-1, data), index);
 		}
 	}
+	
+	private Object setMethActive (String className, String name){
+		Iterator<ClassDef> it = goolClasses.iterator();
+		while (it.hasNext()){
+			ClassDef tmp = it.next();
+			if (tmp.getName().compareTo(className) == 0){
+
+				Meth m = tmp.getMethod(name);
+				if (m == null){return null;}
+				else
+					methActive=m;
+
+				return RETURN_OK;
+			}
+		}
+		return null;
+	}
+
+	private ClassDef classExist (String className){
+		Iterator<ClassDef> it = goolClasses.iterator();
+		while (it.hasNext()){
+			ClassDef tmp = it.next();
+			if (tmp.getName().compareTo(className) == 0){
+				return tmp;
+			}
+		}
+		return null;
+	}
 
 	/******************************************************************************************/
 
@@ -332,6 +367,16 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(FUNCTION_DEFINITION node, Object data) {
+		String className = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_SCOPE");
+		if (className != null){
+			String name = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_NAME");
+			if (name == null){return null;}
+			if (setMethActive(className.replaceAll("::", ""),name) == null){return null;}
+			visit((FUNC_DECL_DEF) node.jjtGetChild(2), data);
+			methActive=null;
+			return RETURN_OK;
+		}
+		
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, "GET_TYPE");
 		if (type == null){return null;}
 		if (testChild((SimpleNode) node.jjtGetChild(1), JJTPTR_OPERATOR,"*")){
@@ -540,6 +585,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(QUALIFIED_ID node, Object data) {
+		if (data.toString().compareTo("GET_SCOPE") == 0)
+			return returnChild(JJTSCOPE_OVERRIDE, node, 0, data);
 		return node.jjtGetValue();
 	}
 
@@ -594,15 +641,26 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(CLASS_SPECIFIER node, Object data) {
-		ClassDef cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
-		stackClassActives.push(cd);
-		if (testChild(node, JJTBASE_CLAUSE)){
-			if (returnChild(JJTBASE_CLAUSE, node, 0, data) == null){return null;}
+		ClassDef cd = classExist(node.jjtGetValue().toString());
+
+		if (cd == null){
+			cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
+
+			stackClassActives.push(cd);
+			if (testChild(node, JJTBASE_CLAUSE)){
+				if (returnChild(JJTBASE_CLAUSE, node, 0, data) == null){return null;}
+			}
+			goolClasses.add(cd);
+			node.childrenAccept(this, data);
+			stackClassActives.pop();
+			return RETURN_OK;
 		}
-		goolClasses.add(cd);
-		node.childrenAccept(this, data);
-		stackClassActives.pop();
-		return RETURN_OK;
+		else {
+			stackClassActives.push(cd);
+			node.childrenAccept(this, data);
+			stackClassActives.pop();
+			return RETURN_OK;
+		}
 	}
 
 	@Override
@@ -767,7 +825,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public Object visit(FUNCTION_DIRECT_DECLARATOR node, Object data) {
 		if (data.toString().compareTo("GET_EXCEP") == 0)
 			return returnChild(JJTEXCEPTION_SPEC, node, 1, data);
-		else if (data.toString().compareTo("GET_NAME") == 0)
+		else if (data.toString().compareTo("GET_NAME") == 0 || data.toString().compareTo("GET_SCOPE") == 0)
 			return returnChild(JJTQUALIFIED_ID, node, 0, data);
 		else if (data.toString().compareTo("GET_PARAMS") == 0)
 			return returnChild(JJTPARAMETER_LIST, node, 1, data);
