@@ -1,4 +1,10 @@
-int i;
+int main(){
+for (;;){
+	return 1;
+	}
+}
+
+/*int i;
 
 
 int main (){

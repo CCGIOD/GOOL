@@ -10,6 +10,7 @@ import gool.ast.core.CastExpression;
 import gool.ast.core.Catch;
 import gool.ast.core.ClassDef;
 import gool.ast.core.ClassNew;
+import gool.ast.core.CompoundAssign;
 import gool.ast.core.Constant;
 import gool.ast.core.Dependency;
 import gool.ast.core.DoWhile;
@@ -1010,44 +1011,57 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(ITERATION_STATEMENT node, Object data) {
-		if (((String) node.jjtGetValue()).compareTo("while")== 0){
+	if (((String) node.jjtGetValue()).compareTo("while")== 0){
 			Expression condWhile = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (condWhile == null){return null;}
 			Statement stWhile = (Statement) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (stWhile == null){stWhile=new Block();}
 			return new While (condWhile,stWhile);
 		}
-		else if (((String) node.jjtGetValue()).compareTo("for")== 0){
-			// TODO : rajouter test si conditions vides
-			if (node.jjtGetNumChildren() != 4)
-				return null;
-
-			Statement initFor = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
-			if (initFor == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(0)).jjtGetLastToken());
-
-			Expression condFor = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
-			if (condFor == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1)).jjtGetLastToken());
-
-			Statement updater = (Statement) visit((SimpleNode) node.jjtGetChild(2),data);
-			if (updater == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(2)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(2)).jjtGetLastToken());
-
-			Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(3),data);
-			if (stFor == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(3)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(3)).jjtGetLastToken());
-
-			return new For(initFor,condFor,updater,stFor);
+	else if (((String) node.jjtGetValue()).compareTo("for")== 0){
+			
+			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()>1){
+				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
+				if (stFor == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
+				return new For(null,null,null,stFor);
+			} 
+			else if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()==1){
+				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
+				if (stFor == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
+				return new For(null,null,null,stFor);
+			}
+			
+			else {
+			
+				Statement initFor = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
+				if (initFor == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(0)).jjtGetLastToken());
+	
+				Expression condFor = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
+				if (condFor == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1)).jjtGetLastToken());
+	
+				Statement updater = (Statement) visit((SimpleNode) node.jjtGetChild(2),data);
+				if (updater == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(2)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(2)).jjtGetLastToken());
+	
+				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(3),data);
+				if (stFor == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(3)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(3)).jjtGetLastToken());
+	
+				return new For(initFor,condFor,updater,stFor);
 		}
-		else if (((String) node.jjtGetValue()).compareTo("dowhile")== 0){
+			}
+	else if (((String) node.jjtGetValue()).compareTo("dowhile")== 0){
 			Expression condDo = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (condDo == null){return null;}		
 			Statement stDo = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (stDo == null){return null;}				
 			return new DoWhile(stDo,condDo);
 		}
-		else
+	else
 			return null;
 	}
 
@@ -1121,15 +1135,47 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(ASSIGNMENT_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren()>1){
+			
 			Node varAss = (Node) visit((SimpleNode) node.jjtGetChild(0),data);
 			Expression expAss = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
-			if (varAss == null || expAss == null){return null;}
-			return new Assign(varAss, expAss);
+			if (((String) node.jjtGetValue()).compareTo("=")== 0){
+				if (varAss == null || expAss == null){return null;}
+				return new Assign(varAss, expAss);
+			}
+			else if (((String) node.jjtGetValue()).compareTo("+=")== 0){
+				Operator operator = Operator.PLUS;
+				String textualoperator = "+";
+				if (varAss == null || expAss == null){return null;}
+				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
+			}
+			else if (((String) node.jjtGetValue()).compareTo("-=")== 0){
+				
+				Operator operator = Operator.MINUS;
+				String textualoperator = "-";
+				if (varAss == null || expAss == null){return null;}
+				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
+			}
+			else if (((String) node.jjtGetValue()).compareTo("*=")== 0){
+				
+				Operator operator = Operator.MULT;
+				String textualoperator = "*";
+				if (varAss == null || expAss == null){return null;}
+				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
+			}
+			else if (((String) node.jjtGetValue()).compareTo("/=")== 0){
+				
+				Operator operator = Operator.NOT;
+				String textualoperator = "";
+				if (varAss == null || expAss == null){return null;}
+				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
+			}
+			else {return null;}
 		}
 		else if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
+
 
 	@Override
 	public Object visit(CONDITIONAL_EXPRESSION node, Object data) {

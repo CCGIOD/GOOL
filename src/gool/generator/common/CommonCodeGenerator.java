@@ -31,6 +31,7 @@ import gool.ast.core.CompoundAssign;
 import gool.ast.core.Constant;
 import gool.ast.core.Constructor;
 import gool.ast.core.DoWhile;
+import gool.ast.core.Expression;
 import gool.ast.core.ExpressionUnknown;
 import gool.ast.core.Field;
 import gool.ast.core.FieldAccess;
@@ -328,9 +329,16 @@ public abstract class CommonCodeGenerator implements CodeGenerator {
 
 	@Override
 	public String getCode(For forInstruction) {
-		return formatIndented("for (%s ; %s ; %s) {%1}",
-				forInstruction.getInitializer(), forInstruction.getCondition(),
-				forInstruction.getUpdater(), forInstruction.getWhileStatement());
+		String out=formatIndented("for(");
+		Statement initFor = forInstruction.getInitializer();
+		Expression condFor = forInstruction.getCondition();
+		Statement updater = forInstruction.getUpdater();
+		Statement stFor = forInstruction.getWhileStatement();
+		if (initFor==null){out+=formatIndented(" ;");}else {out+=formatIndented(" %s;",initFor);}
+		if (condFor==null){out+=formatIndented(" ;");}else {out+=formatIndented(" %s;",condFor);}
+		if (updater==null){out+=formatIndented(" )");}else {out+=formatIndented(" %s )",updater);}
+		if (stFor==null){out+=formatIndented("{}");}else {out+=formatIndented(" {%1}",stFor);}
+		return out;
 	}
 
 	@Override
