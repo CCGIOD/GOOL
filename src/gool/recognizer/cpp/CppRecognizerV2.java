@@ -29,6 +29,7 @@ import gool.ast.core.Modifier;
 import gool.ast.core.NewInstance;
 import gool.ast.core.Node;
 import gool.ast.core.Operator;
+import gool.ast.core.RecognizedDependency;
 import gool.ast.core.Return;
 import gool.ast.core.Statement;
 import gool.ast.core.Switch;
@@ -1743,21 +1744,26 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public Object visit(INCLUDE_SPECIFER node, Object data) {
 		debug("INCLUDE_SPECIFER", node.jjtGetValue(), node.jjtGetType());
 		// TODO: faire le chainage et ajouter le noeud dependancy
-		System.out.println("J'ai remarqué un include standard : " + "[" + ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1) + "]");
-		System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
+		//System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
 		// The destination package is either null or that specified by the
 		// visited package
 		List<Dependency> dependencies = new ArrayList<Dependency>();
 
 		// GoolMatcher init call
-
+		// GoolMatcher init call
+	    RecognizerMatcher.init("cpp");
+				
 		String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
 		if (!RecognizerMatcher.matchImport(dependencyString )) {
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
+		else{
+			dependencies.add(new RecognizedDependency("io.GoolFile"/* Modifier car normalement on doit avoir la correspondance dans les fichier*/));
+		}
+		
 		stackClassActives.peek().addDependencies(dependencies);
 
-		System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
+		//System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
 
 		return null;
 	}
