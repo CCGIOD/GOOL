@@ -1525,23 +1525,38 @@ void unary_operator() #UNARY_OPERATOR :
 }
 
 void postfix_expression() #POSTFIX_EXPRESSION :
-{Token t; int c=0; java.util.List<String> l = new java.util.ArrayList<String>();}
+{Token t; int c=0; java.util.List<String> l = new java.util.ArrayList<String>(); l.add("i");}
 {
    LOOKAHEAD(3)
     primary_expression()
     ( LOOKAHEAD(2) (
      "[" expression() "]" {jjtThis.value="[]";}
     |
-     "(" ( expression_list() )? ")" {jjtThis.value="()"; l.add("()");}
+     "(" ( expression_list() {l.add("e");} )? ")" 
+     {	
+     	jjtThis.value="()";
+    	if (l.size() > 0 && l.get(l.size()-1).compareTo("i") == 0){
+     		l.remove(l.size()-1);
+     		l.add("()");     		
+     	}
+     	else if (l.size() > 0 && l.get(l.size()-1).compareTo("e") == 0 && l.get(l.size()-2).compareTo("i") == 0){
+     	     l.remove(l.size()-1);
+     	     l.remove(l.size()-1);
+     	     l.add("()");
+     	     l.add("e");     	     
+     	}
+     	else
+     		l.add("()");
+     }
     |
-     "." id_expression() {l.add(".");}
+     "." id_expression() {l.add("i"); }
     |
      "->" id_expression()
     |
      "++" {jjtThis.value="++"; c++;}
     |
      "--" {jjtThis.value="--"; c++;})
-     )* {if (c > 1){ jjtThis.value="ERROR";} if (l.size() != 0){ jjtThis.value=l;}}
+     )* {if (c > 1){ jjtThis.value="ERROR";} if (l.size() > 1){ jjtThis.value=l;}}
   |
    simple_type_specifier() "(" ( expression_list() )? ")"
 }
