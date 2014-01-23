@@ -17,6 +17,13 @@ static class B
 
 };
 
+// Librairie
+// Transformer en java.io.File
+#include "GoolFileImpl.h"
+GoolFileImpl f("azerty1");
+
+
+
 enum Color
    {
       RED,
