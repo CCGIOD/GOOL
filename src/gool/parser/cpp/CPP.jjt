@@ -1284,7 +1284,7 @@ void iteration_statement() #ITERATION_STATEMENT :
    |
     "do" statement() "while" "(" expression() ")" ";" {jjtThis.value="dowhile";}
    |
-    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() | expression() ";" {s+="1";} | ";" )
+    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() {s+="1";} | expression() ";" {s+="1";} | ";" )
     (expression() {s+="2";})? ";" (expression() {s+="3";}) ? ")" statement() {jjtThis.value=s;}
 }
 

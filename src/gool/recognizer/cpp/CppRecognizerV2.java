@@ -165,6 +165,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		}
 		catch (Exception e){return;}
 
+		RecognizerMatcher.init("cpp");
+		
 		for (SimpleNode a : ast)
 			cppr.visit(a, 0);
 		try {
@@ -674,14 +676,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(QUALIFIED_TYPE node, Object data) {
 		debug("QUALIFIED_TYPE", node.jjtGetValue(), node.jjtGetType());
-		Object cppClass = node.jjtGetChild(0).jjtGetValue().toString();
-		String goolClass = RecognizerMatcher.matchClass((String)cppClass);
+		String cppClass = node.jjtGetChild(0).jjtGetValue().toString();
+		String goolClass = RecognizerMatcher.matchClass(cppClass);
 		if (goolClass != null) {
-			// A GOOL library class matched with the current type has been
-			// found.
-			// We add it as a RecognizedDependency to the current context,
-			// this dependency will get generated into imports in the target
-			// language
 			if(!importCache.contains(goolClass)){
 				stackClassActives.peek().addDependency(new RecognizedDependency(goolClass));
 				importCache.add(goolClass);
@@ -1285,7 +1282,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 						condFor = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
 						if (condFor == null)
 							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
-
 					}
 					else{
 						updater = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
@@ -1643,64 +1639,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		return null;
 	}
 
-	/*private Expression getLinkedExpression (SimpleNode node, int i){
-		if (i == 0){
-
-		}
-	}*/
-
-	/*private Expression getLinkedTarget (SimpleNode node, int i, List<String> l, Object data){
-		if (i == 0 && l.get(i).compareTo("()") == 0){
-			Expression target = (Expression) returnChild(JJTID_EXPRESSION, node, 1, data);
-			if (target == null){ return null;}
-			return new MethCall(new TypeMethod("typemeth"), target);
-		}
-		else if (i == 0 && l.get(i).compareTo("i") == 0){
-			return (Expression) returnChild(JJTID_EXPRESSION, node, 1, data);
-		}
-		else if (i > 0 && i < node.jjtGetNumChildren()){
-			//if ()
-
-			return null;
-
-		}
-		else {
-			if (l.get(l.size()-1).compareTo("()") == 0){
-				Expression pre = (Expression) getLinkedTarget(node, i+1, l, data);
-				Identifier id = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, i, data);
-				if (id == null || pre == null){return null;}
-				Expression target = new FieldAccess(new TypeVar(""), id, pre.toString());	*/
-	/*Expression post = getLinkedTarget(node, i-2, l, data);
-				System.out.println(post);
-				Identifier id = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
-				if (post == null || id == null){return null;}
-				Expression target = new FieldAccess(new TypeVar(""), id, post.toString());		
-				return new MethCall(new TypeMethod("typemeth"), target);
-
-				//Expression target = getLinkedTarget(node, i+2, l, data);
-				//Identifier id = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
-
-				Expression id = getLinkedTarget(node, i+2, l, data);
-
-				if (target == null || id == null){return null;}
-				return new MethCall(new TypeMethod("typemeth"), target, id.getName(),null);
-			}
-			else{
-				Expression pre = (Expression) getLinkedTarget(node, i+1, l, data);
-				Identifier id = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
-				if (id == null || pre == null){return null;}
-				Expression target = new FieldAccess(new TypeVar(""), id, pre.toString());			
-				return new MemberSelect(id, new VarDeclaration(id2.getType(),id2.getName()));
-				return null;
-			}
-		}
-
-	}*/
-
-	/*private Expression getLinkedTarget (List<String> lt, List<String> ln){
-
-	}*/
-
 	private Expression getLinkedTarget (SimpleNode node, int i, List<String> l, Object data){
 		if (node.jjtGetChild(i).jjtGetId() == JJTEXPRESSION_LIST){
 			return getLinkedTarget(node, i-1, l, data);
@@ -1711,7 +1649,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				Expression target = getLinkedTarget(node, i-1, l, data);
 				if (id == null || target == null){return null;}
 				MethCall m = new MethCall(new TypeMethod("typemeth"), new MemberSelect(target, new VarDeclaration(id.getType(), id.getName())));
-				if (i+1 <= node.jjtGetNumChildren() && node.jjtGetChild(i+1).jjtGetId() == JJTEXPRESSION_LIST){
+				if (i+1 < node.jjtGetNumChildren() && node.jjtGetChild(i+1).jjtGetId() == JJTEXPRESSION_LIST){
 					m.addParameters((List<Expression>) visit((SimpleNode) node.jjtGetChild(i+1),data));
 				}
 				return m;
@@ -1727,7 +1665,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			Identifier id = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
 			if (id == null){return null;}
 			MethCall m = new MethCall(new TypeMethod("typemeth"), id);
-			if (i+1 <= node.jjtGetNumChildren() && node.jjtGetChild(i+1).jjtGetId() == JJTEXPRESSION_LIST){
+			if (i+1 < node.jjtGetNumChildren() && node.jjtGetChild(i+1).jjtGetId() == JJTEXPRESSION_LIST){
 				m.addParameters((List<Expression>) visit((SimpleNode) node.jjtGetChild(i+1),data));
 			}
 			return m;
@@ -1743,23 +1681,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public Object visit(POSTFIX_EXPRESSION node, Object data) {
 		debug("POSTFIX_EXPRESSION", node.jjtGetValue(), node.jjtGetType());
 		if (node.jjtGetValue() instanceof List<?>){
-			System.out.println(node.jjtGetValue());
 			List<String> l = (List<String>) node.jjtGetValue();			
 			return getLinkedTarget(node, node.jjtGetNumChildren()-1, l, data);
-
-			/*if (l.get(l.size()-1).compareTo("()") == 0){
-				Identifier id2 = (Identifier) returnChild(JJTID_EXPRESSION, node, 1, data);
-				Identifier id1 = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
-				if (id1 == null || id2 == null){return null;}
-				Expression target = new FieldAccess(new TypeVar(""), id1, id2.toString());		
-				return new MethCall(new TypeMethod("typemeth"), target);				
-			}
-			else{
-				Identifier id2 = (Identifier) returnChild(JJTID_EXPRESSION, node, 1, data);
-				Identifier id1 = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, data);
-				if (id1 == null || id2 == null){return null;}				
-				return new MemberSelect(id1, new VarDeclaration(id2.getType(),id2.getName()));
-			}*/
 		}
 		else if (node.jjtGetValue() != null && ((String) node.jjtGetValue()).compareTo("()") == 0){
 			Identifier name = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, "GET_ID_FCT");						
@@ -1889,7 +1812,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 		// GoolMatcher init call
 		// GoolMatcher init call
-		RecognizerMatcher.init("cpp");
 
 		String dependencyString = ((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1);
 		if (!RecognizerMatcher.matchImport(dependencyString )) {
