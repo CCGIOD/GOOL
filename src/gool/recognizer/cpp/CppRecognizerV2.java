@@ -47,6 +47,7 @@ import gool.ast.type.TypeBool;
 import gool.ast.type.TypeChar;
 import gool.ast.type.TypeClass;
 import gool.ast.type.TypeDecimal;
+import gool.ast.type.TypeGoolLibraryClass;
 import gool.ast.type.TypeInt;
 import gool.ast.type.TypeMethod;
 import gool.ast.type.TypeString;
@@ -62,8 +63,10 @@ import gool.recognizer.common.RecognizerMatcher;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 @SuppressWarnings("unchecked")
@@ -105,6 +108,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	private Meth methActive = null;
 	private Modifier accesModifierActive = Modifier.PUBLIC;
 
+	// un cache pour Savoir ce qui est importé.
+	private Collection<String> importCache = new ArrayList<String>();
+
+	
 	// Constructeur
 	public CppRecognizerV2 (){
 		this.AST=CPPParser.getCppAST();
@@ -666,6 +673,20 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(QUALIFIED_TYPE node, Object data) {
 		debug("QUALIFIED_TYPE", node.jjtGetValue(), node.jjtGetType());
+		Object cppClass = node.jjtGetChild(0).jjtGetValue().toString();
+		String goolClass = RecognizerMatcher.matchClass((String)cppClass);
+		if (goolClass != null) {
+			// A GOOL library class matched with the current type has been
+			// found.
+			// We add it as a RecognizedDependency to the current context,
+			// this dependency will get generated into imports in the target
+			// language
+			if(!importCache.contains(goolClass)){
+				stackClassActives.peek().addDependency(new RecognizedDependency(goolClass));
+				importCache.add(goolClass);
+			}
+			return new TypeGoolLibraryClass(goolClass);
+		}
 		return new TypeClass(node.jjtGetChild(0).jjtGetValue().toString());
 	}
 
@@ -1759,7 +1780,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
 		else{
-			dependencies.add(new RecognizedDependency(RecognizerMatcher.matchClass("GoolFileImpl")));
+			//dependencies.add(new RecognizedDependency(RecognizerMatcher.matchClass("GoolFileImpl")));
 			
 			//dependencies.add(new RecognizedDependency("io.GoolFile"/* Modifier car normalement on doit avoir la correspondance dans les fichier*/));
 		}
