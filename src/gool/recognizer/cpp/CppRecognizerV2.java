@@ -352,7 +352,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	public Object visit(TRANSLATION_UNIT node, Object data) {
 		ClassDef unitaryClass = classExist(createClassNameFromFilename(node.jjtGetValue()));
 		if (unitaryClass == null){
-			System.out.println(node.jjtGetValue()+" ok");
 			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
 			goolClasses.add(unitaryClass);
 		}
@@ -1119,65 +1118,42 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			return new While (condWhile,stWhile);
 		}
 
-	else if (((String) node.jjtGetValue()).compareTo("for")== 0){
-			
-			if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()!=1){
-				Statement stFor=null;
-				Statement initFor=null;
-				Expression condFor=null;
-				Statement updater = null;
-				
-				for (int i=0;i<node.jjtGetNumChildren()-1;i++){
-					
-					try{
-							if(((String)node.jjtGetChild(i).jjtGetChild(0).jjtGetValue()).compareTo("=")==0){
-								initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
-								if (initFor == null)
-									getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
-								
-							} 
-					}
-					catch(Exception e){}
-					try{					
-						Expression test = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
-						if((test.getType()).equals(TypeBool.INSTANCE)){
-							condFor=test;
-						} else if((test.getType()).equals(TypeInt.INSTANCE)){
-							updater=(Statement)test;
-						}
-					}
-					catch(Exception e){}
-				}
-				stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
-				if (stFor == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
-									
-				return new For(initFor,condFor,updater,stFor);
-			} 
-			else if (node.jjtGetNumChildren() != 4 && node.jjtGetNumChildren()==1){
+		else if (((String) node.jjtGetValue()).startsWith("for")){
+
+			if (node.jjtGetValue().toString().split(" ").length == 1){
 				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
 					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
 				return new For(null,null,null,stFor);
 			}
+			else {				
+				String pattern = node.jjtGetValue().toString().split(" ")[1];
+				Statement stFor=null;
+				Statement initFor=null;
+				Expression condFor=null;
+				Statement updater = null;
 
-			else {
+				for (int i=0;i<node.jjtGetNumChildren()-1;i++){
+					if (pattern.charAt(i) == '1'){
+						initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
+						if (initFor == null)
+							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+					}
+					else if (pattern.charAt(i) == '2'){
+						condFor = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
+						if (condFor == null)
+							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 
-				Statement initFor = (Statement) visit((SimpleNode) node.jjtGetChild(0),data);
-				if (initFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(0)).jjtGetLastToken());
-
-				Expression condFor = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
-				if (condFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1)).jjtGetLastToken());
-
-				Statement updater = (Statement) visit((SimpleNode) node.jjtGetChild(2),data);
-				if (updater == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(2)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(2)).jjtGetLastToken());
-
-				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(3),data);
+					}
+					else{
+						updater = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
+						if (updater == null)
+							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+					}
+				}
+				stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(3)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(3)).jjtGetLastToken());
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
 
 				return new For(initFor,condFor,updater,stFor);
 			}
@@ -1624,7 +1600,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
 		stackClassActives.peek().addDependencies(dependencies);
-		
+
 		System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
 
 		return null;

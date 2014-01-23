@@ -3954,10 +3954,10 @@ void type_specifier() :
 
   static final public void iteration_statement() throws ParseException {
  /*@bgen(jjtree) ITERATION_STATEMENT */
-  ITERATION_STATEMENT jjtn000 = new ITERATION_STATEMENT(JJTITERATION_STATEMENT);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-  jjtn000.jjtSetFirstToken(getToken(1));
+ ITERATION_STATEMENT jjtn000 = new ITERATION_STATEMENT(JJTITERATION_STATEMENT);
+ boolean jjtc000 = true;
+ jjtree.openNodeScope(jjtn000);
+ jjtn000.jjtSetFirstToken(getToken(1));String s="";
     try {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case WHILE:
@@ -3986,12 +3986,14 @@ void type_specifier() :
         break;
       case FOR:
         jj_consume_token(FOR);
+           s="for ";
         jj_consume_token(LPARENTHESIS);
         if (jj_2_97(3)) {
           declaration();
         } else if (jj_2_98(1)) {
           expression();
           jj_consume_token(SEMICOLON);
+                                                                          s+="1";
         } else {
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case SEMICOLON:
@@ -4005,21 +4007,23 @@ void type_specifier() :
         }
         if (jj_2_99(1)) {
           expression();
+                   s+="2";
         } else {
           ;
         }
         jj_consume_token(SEMICOLON);
         if (jj_2_100(1)) {
           expression();
+                                                 s+="3";
         } else {
           ;
         }
         jj_consume_token(RPARENTHESIS);
         statement();
-                                                          jjtree.closeNodeScope(jjtn000, true);
-                                                          jjtc000 = false;
-                                                          jjtn000.jjtSetLastToken(getToken(0));
-                                                         jjtn000.value="for";
+                                                                               jjtree.closeNodeScope(jjtn000, true);
+                                                                               jjtc000 = false;
+                                                                               jjtn000.jjtSetLastToken(getToken(0));
+                                                                              jjtn000.value=s;
         break;
       default:
         jj_la1[91] = jj_gen;
@@ -8421,6 +8425,12 @@ void type_specifier() :
     return false;
   }
 
+  static private boolean jj_3_98() {
+    if (jj_3R_102()) return true;
+    if (jj_scan_token(SEMICOLON)) return true;
+    return false;
+  }
+
   static private boolean jj_3R_95() {
     if (jj_3R_197()) return true;
     Token xsp;
@@ -8515,12 +8525,6 @@ void type_specifier() :
     return false;
   }
 
-  static private boolean jj_3_98() {
-    if (jj_3R_102()) return true;
-    if (jj_scan_token(SEMICOLON)) return true;
-    return false;
-  }
-
   static private boolean jj_3R_243() {
     if (jj_3R_59()) return true;
     return false;
@@ -8566,6 +8570,11 @@ void type_specifier() :
     return false;
   }
 
+  static private boolean jj_3_100() {
+    if (jj_3R_102()) return true;
+    return false;
+  }
+
   static private boolean jj_3R_362() {
     if (jj_scan_token(137)) return true;
     if (jj_3R_263()) return true;
@@ -8596,8 +8605,8 @@ void type_specifier() :
     return false;
   }
 
-  static private boolean jj_3_100() {
-    if (jj_3R_102()) return true;
+  static private boolean jj_3_97() {
+    if (jj_3R_56()) return true;
     return false;
   }
 
@@ -8639,11 +8648,6 @@ void type_specifier() :
   static private boolean jj_3R_306() {
     if (jj_scan_token(BREAK)) return true;
     if (jj_scan_token(SEMICOLON)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_97() {
-    if (jj_3R_56()) return true;
     return false;
   }
 

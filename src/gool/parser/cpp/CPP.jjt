@@ -1278,14 +1278,14 @@ void selection_statement() #SELECTION_STATEMENT :
 }
 
 void iteration_statement() #ITERATION_STATEMENT :
-{}
+{String s="";}
 {
     "while" "(" expression() ")" statement() {jjtThis.value="while";}
    |
     "do" statement() "while" "(" expression() ")" ";" {jjtThis.value="dowhile";}
    |
-    "for" "(" (LOOKAHEAD(3) declaration() | expression() ";" | ";")
-    (expression())? ";" (expression())? ")" statement() {jjtThis.value="for";}
+    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() | expression() ";" {s+="1";} | ";" )
+    (expression() {s+="2";})? ";" (expression() {s+="3";}) ? ")" statement() {jjtThis.value=s;}
 }
 
 void jump_statement() #JUMP_STATEMENT :

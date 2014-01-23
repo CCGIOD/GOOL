@@ -200,6 +200,8 @@ SKIP :
   "#ifndef" : PREPROCESSOR_OUTPUT
 |
   "#endif" : PREPROCESSOR_OUTPUT
+|
+  "#define" : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:
@@ -3341,11 +3343,11 @@ void selection_statement()                      :
 
 void iteration_statement()                      :
 {/*@bgen(jjtree) ITERATION_STATEMENT */
-  ITERATION_STATEMENT jjtn000 = new ITERATION_STATEMENT(JJTITERATION_STATEMENT);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-  jjtn000.jjtSetFirstToken(getToken(1));
-/*@egen*/}
+ ITERATION_STATEMENT jjtn000 = new ITERATION_STATEMENT(JJTITERATION_STATEMENT);
+ boolean jjtc000 = true;
+ jjtree.openNodeScope(jjtn000);
+ jjtn000.jjtSetFirstToken(getToken(1));
+/*@egen*/String s="";}
 {/*@bgen(jjtree) ITERATION_STATEMENT */
     try {
 /*@egen*/
@@ -3365,14 +3367,14 @@ void iteration_statement()                      :
                                                       }
 /*@egen*/ {jjtn000.value="dowhile";}
    |
-    "for" "(" (LOOKAHEAD(3) declaration() | expression() ";" | ";")
-    (expression())? ";" (expression())? ")" statement()/*@bgen(jjtree)*/
-                                                        {
-                                                          jjtree.closeNodeScope(jjtn000, true);
-                                                          jjtc000 = false;
-                                                          jjtn000.jjtSetLastToken(getToken(0));
-                                                        }
-/*@egen*/ {jjtn000.value="for";}/*@bgen(jjtree)*/
+    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() | expression() ";" {s+="1";} | ";" )
+    (expression() {s+="2";})? ";" (expression() {s+="3";}) ? ")" statement()/*@bgen(jjtree)*/
+                                                                             {
+                                                                               jjtree.closeNodeScope(jjtn000, true);
+                                                                               jjtc000 = false;
+                                                                               jjtn000.jjtSetLastToken(getToken(0));
+                                                                             }
+/*@egen*/ {jjtn000.value=s;}/*@bgen(jjtree)*/
     } catch (Throwable jjte000) {
       if (jjtc000) {
         jjtree.clearNodeScope(jjtn000);
