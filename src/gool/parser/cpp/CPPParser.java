@@ -1222,7 +1222,7 @@ void type_specifier() :
                   jjtree.closeNodeScope(jjtn000, true);
                   jjtc000 = false;
                   jjtn000.jjtSetLastToken(getToken(0));
-                  {if (true) return true;}
+                  jjtn000.value = "UNKNOW"; {if (true) return true;}
         break;
       default:
         jj_la1[27] = jj_gen;
@@ -3990,10 +3990,11 @@ void type_specifier() :
         jj_consume_token(LPARENTHESIS);
         if (jj_2_97(3)) {
           declaration();
+                                                       s+="1";
         } else if (jj_2_98(1)) {
           expression();
           jj_consume_token(SEMICOLON);
-                                                                          s+="1";
+                                                                                    s+="1";
         } else {
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case SEMICOLON:
@@ -8302,6 +8303,12 @@ void type_specifier() :
     return false;
   }
 
+  static private boolean jj_3_98() {
+    if (jj_3R_102()) return true;
+    if (jj_scan_token(SEMICOLON)) return true;
+    return false;
+  }
+
   static private boolean jj_3R_321() {
     if (jj_scan_token(SHIFTRIGHTEQUAL)) return true;
     return false;
@@ -8422,12 +8429,6 @@ void type_specifier() :
 
   static private boolean jj_3_23() {
     if (jj_3R_62()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_98() {
-    if (jj_3R_102()) return true;
-    if (jj_scan_token(SEMICOLON)) return true;
     return false;
   }
 

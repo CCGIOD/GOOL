@@ -446,7 +446,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			listVD = (List<VarDeclaration>) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_PARAMS");
 		}
 		if (listVD == null){listVD=new ArrayList<VarDeclaration>();}
-		
+
 		if (name.compareTo("main") == 0 && type == TypeInt.INSTANCE && ((listVD.size() == 2 
 				&& listVD.get(0).getType() == TypeInt.INSTANCE && listVD.get(1).getType() == TypeString.INSTANCE) || (listVD.size() == 0))){ 
 			m = new MainMeth();
@@ -493,8 +493,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(DECLARATION node, Object data) {		
-		debug("DECLARATION", node.jjtGetValue(), node.jjtGetType());	
+	public Object visit(DECLARATION node, Object data) {
+		debug("DECLARATION", node.jjtGetValue(), node.jjtGetType());
+		if (testChild(node, JJTSTORAGE_CLASS_SPECIFIER,"UNKNOW"))
+			return null;
 
 		// Cas d'une déclaration de classe
 		if (testChild(node, JJTCLASS_SPECIFIER))	
@@ -510,6 +512,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				else
 					return null;
 			}
+
 			Collection <Modifier> cm = (Collection <Modifier>) visit((DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 			if (cm == null || cm.contains(Modifier.ABSTRACT)){cm = new ArrayList<Modifier>();}
 
@@ -601,8 +604,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			Collection <Modifier> toReturn = new ArrayList<Modifier>();
 			for (int i=0;node.jjtGetChild(i).jjtGetId() == JJTTYPE_MODIFIERS;i++){
 				Modifier m = (Modifier) visit((SimpleNode) node.jjtGetChild(i), data);
-				if (m == null){return null;}
-				toReturn.add(m);
+				if (m == null)
+					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				else
+					toReturn.add(m);
 			}
 			return toReturn;			
 		}
@@ -671,6 +676,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(STORAGE_CLASS_SPECIFIER node, Object data) {
 		debug("STORAGE_CLASS_SPECIFIER", node.jjtGetValue(), node.jjtGetType());
+		if (node.jjtGetValue() == null){
+			return null;
+		}
 		return convertModToGoolMod(node.jjtGetValue().toString());
 	}
 
