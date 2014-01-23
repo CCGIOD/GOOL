@@ -3,7 +3,6 @@
 - Rajouter dans la reconnaissance : 
 	* template (?)
 	* enhancedForLoop : for (int i : list){}
-	* ajouter des tests sur le main pour reconnaitre que le vrai : int main( int argc, const char* argv[] )
 	* ajouter les cast en tableau :
 			-> int i = (double) k;
 			-> int i = (double []) k;

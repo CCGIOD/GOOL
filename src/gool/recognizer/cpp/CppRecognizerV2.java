@@ -383,7 +383,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, "GET_TYPE");
 		if (type == null){return null;}
-		if (testChild((SimpleNode) node.jjtGetChild(1), JJTPTR_OPERATOR,"*")){
+		if (node.jjtGetChild(1).jjtGetChild(0).jjtGetId()==JJTPTR_OPERATOR && node.jjtGetChild(1).jjtGetChild(0).jjtGetValue() != null){
 			if (type.equals(TypeChar.INSTANCE))
 				type=TypeString.INSTANCE;
 			else
@@ -397,18 +397,20 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		if (cm == null){return null;}
 
 		Meth m;
-		// TODO : Rajouter des tests sur le main pour qu'il reconnaisse seulement le vrai
-		if (name.compareTo("main") == 0){ 
+		List<VarDeclaration> listVD=null;
+		if (testChild(node, JJTPARAMETER_LIST)){
+			listVD = (List<VarDeclaration>) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_PARAMS");
+		}
+		if (listVD == null){listVD=new ArrayList<VarDeclaration>();}
+		
+		if (name.compareTo("main") == 0 && type == TypeInt.INSTANCE && ((listVD.size() == 2 
+				&& listVD.get(0).getType() == TypeInt.INSTANCE && listVD.get(1).getType() == TypeString.INSTANCE) || (listVD.size() == 0))){ 
 			m = new MainMeth();
 		}
 		else{
 			m = new Meth(type, name);
-			if (testChild(node, JJTPARAMETER_LIST)){
-				List<VarDeclaration> listVD = (List<VarDeclaration>) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_PARAMS");
-				if (listVD == null){listVD=new ArrayList<VarDeclaration>();}
-				for (VarDeclaration vd : listVD)
-					m.addParameter(vd);
-			}
+			for (VarDeclaration vd : listVD)
+				m.addParameter(vd);
 
 			if (testChild(node, JJTEXCEPTION_SPEC)){
 				List<IType> lt = (List<IType>) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_EXCEP");
