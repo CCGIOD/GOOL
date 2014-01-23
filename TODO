@@ -2,7 +2,6 @@
 
 - Rajouter dans la reconnaissance : 
 	* template (?)
-	* enhancedForLoop : for (int i : list){}
 	* ajouter les cast en tableau :
 			-> int i = (double) k;
 			-> int i = (double []) k;

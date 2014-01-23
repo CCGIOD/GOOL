@@ -23,6 +23,7 @@ import gool.ast.core.GoolCall;
 import gool.ast.core.Identifier;
 import gool.ast.core.If;
 import gool.ast.core.MainMeth;
+import gool.ast.core.MemberSelect;
 import gool.ast.core.Meth;
 import gool.ast.core.MethCall;
 import gool.ast.core.Modifier;
@@ -1620,11 +1621,35 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		debug("UNARY_OPERATOR", node.jjtGetValue(), node.jjtGetType());
 		return null;
 	}
+	
+	/*private Expression getLinkedExpression (SimpleNode node, int i){
+		if (i == 0){
+			
+		}
+	}*/
 
 	@Override
 	public Object visit(POSTFIX_EXPRESSION node, Object data) {
 		debug("POSTFIX_EXPRESSION", node.jjtGetValue(), node.jjtGetType());
-		if (node.jjtGetValue() != null && ((String) node.jjtGetValue()).compareTo("()") == 0){
+		if (node.jjtGetValue() instanceof List<?>){
+			/*System.out.println(node.jjtGetValue());
+			List<String> l = (List<String>) node.jjtGetValue();
+			if (l.get(l.size()-1).compareTo("()") == 0){
+				return new MethCall(new TypeMethod("typemeth"), new MemberSelect(target, new VarDeclaration(new TypeVar("typevar"), "f")));
+			}
+			else{
+				return new MemberSelect(new MethCall(new TypeMethod("typemeth"),"m"), new VarDeclaration(new TypeVar("typevar"), "f"));
+			}*/
+			return null;
+		}
+		/*if (node.jjtGetNumChildren() > 1 && node.jjtGetChild(0).jjtGetId() == JJTPRIMARY_EXPRESSION && node.jjtGetChild(1).jjtGetId() == JJTID_EXPRESSION){
+			//return new MethCall(new TypeMethod("typemeth"), "f.m");
+			//return new MethCall(new TypeMethod("typemeth"),new MethCall(new TypeMethod("typemeth"),"m"));
+			//return new MemberSelect(new MethCall(new TypeMethod("typemeth"),"m"), new VarDeclaration(new TypeVar("typevar"), "f"));
+		//if (node.jjtGetChild(node.))
+			return null;
+		}*/
+		else if (node.jjtGetValue() != null && ((String) node.jjtGetValue()).compareTo("()") == 0){
 			Identifier name = (Identifier) returnChild(JJTPRIMARY_EXPRESSION, node, 0, "GET_ID_FCT");						
 			MethCall m = new MethCall(new TypeMethod("typemeth"), name);
 			if (node.jjtGetNumChildren() > 1){

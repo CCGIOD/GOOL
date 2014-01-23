@@ -2,7 +2,7 @@ class A
 {
 	public:
 		~A(int i){int i;}
-		void m(int i, ...);
+		void m(int i);
 		virtual void f1 ();
 		int main (){ new A (1,2); i++; ++i; }
 

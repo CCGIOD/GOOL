@@ -1525,23 +1525,23 @@ void unary_operator() #UNARY_OPERATOR :
 }
 
 void postfix_expression() #POSTFIX_EXPRESSION :
-{Token t; int c=0;}
+{Token t; int c=0; java.util.List<String> l = new java.util.ArrayList<String>();}
 {
    LOOKAHEAD(3)
     primary_expression()
     ( LOOKAHEAD(2) (
      "[" expression() "]" {jjtThis.value="[]";}
     |
-     "(" ( expression_list() )? ")" {jjtThis.value="()";}
+     "(" ( expression_list() )? ")" {jjtThis.value="()"; l.add("()");}
     |
-     "." id_expression()
+     "." id_expression() {l.add(".");}
     |
      "->" id_expression()
     |
      "++" {jjtThis.value="++"; c++;}
     |
      "--" {jjtThis.value="--"; c++;})
-     )* {if (c > 1){ jjtThis.value="ERROR";} }
+     )* {if (c > 1){ jjtThis.value="ERROR";} if (l.size() != 0){ jjtThis.value=l;}}
   |
    simple_type_specifier() "(" ( expression_list() )? ")"
 }
