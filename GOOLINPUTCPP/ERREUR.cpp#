@@ -1,0 +1,7 @@
+typedef short SmallNumber;
+
+auto extern static int i;
+
+int main (int i, ...){}
+int main (...){}
+

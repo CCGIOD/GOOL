@@ -1222,7 +1222,7 @@ void type_specifier() :
                   jjtree.closeNodeScope(jjtn000, true);
                   jjtc000 = false;
                   jjtn000.jjtSetLastToken(getToken(0));
-                  {if (true) return true;}
+                  jjtn000.value = "UNKNOW"; {if (true) return true;}
         break;
       default:
         jj_la1[27] = jj_gen;

@@ -1200,7 +1200,7 @@ boolean storage_class_specifier()                          :
                   jjtc000 = false;
                   jjtn000.jjtSetLastToken(getToken(0));
                 }
-/*@egen*/  { return true; }/*@bgen(jjtree)*/
+/*@egen*/  { jjtn000.value = "UNKNOW"; return true; }/*@bgen(jjtree)*/
    } finally {
      if (jjtc000) {
        jjtree.closeNodeScope(jjtn000, true);

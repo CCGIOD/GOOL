@@ -691,7 +691,7 @@ boolean storage_class_specifier() #STORAGE_CLASS_SPECIFIER :
 {}
 {
    ( "auto" | "register" | "static" {jjtThis.value = "static";} | "extern" ) { return false; }
-   | "typedef"  { return true; }
+   | "typedef"  { jjtThis.value = "UNKNOW"; return true; }
 }
 
 void builtin_type_specifier() #BUILTIN_TYPE_SPECIFIER :
