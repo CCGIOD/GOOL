@@ -56,6 +56,7 @@ import gool.generator.GeneratorHelper;
 import gool.generator.common.Platform;
 import gool.generator.java.JavaPlatform;
 import gool.parser.cpp.*;
+import gool.recognizer.common.GoolLibraryClassAstBuilder;
 import gool.recognizer.common.RecognizerMatcher;
 
 import java.io.FileNotFoundException;
@@ -1758,9 +1759,26 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
 		else{
-			dependencies.add(new RecognizedDependency("io.GoolFile"/* Modifier car normalement on doit avoir la correspondance dans les fichier*/));
+			dependencies.add(new RecognizedDependency(RecognizerMatcher.matchClass("GoolFileImpl")));
+			
+			//dependencies.add(new RecognizedDependency("io.GoolFile"/* Modifier car normalement on doit avoir la correspondance dans les fichier*/));
 		}
+		//System.out.println(RecognizerMatcher.matchClass("GoolFileImpl"));
 		
+
+		/*for (ClassDef classDef : getGoolClasses()) {
+			GoolLibraryClassAstBuilder.init(defaultPlatform);
+			int x = 0;
+			for (Dependency dep : classDef.getDependencies()) {
+				x++;
+				if (dep instanceof RecognizedDependency) {
+					GoolLibraryClassAstBuilder
+					.buildGoolClass(((RecognizedDependency) dep)
+							.getName());
+				}
+			}
+		}*/
+		//RecognizerMatcher.printMatchTables();
 		stackClassActives.peek().addDependencies(dependencies);
 
 		//System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
