@@ -1105,18 +1105,30 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
+	// TODO : ajouter les cast sur les types tableaux
 	public Object visit(TYPE_NAME node, Object data) {
 		debug("TYPE_NAME", node.jjtGetValue(), node.jjtGetType());
-		if (node.jjtGetChild(1).jjtGetNumChildren() > 0)
-			return null; // TODO : ajouter les cast sur les types tableaux
-		return visit((SimpleNode) node.jjtGetChild(0), data);
+		System.out.println(node.jjtGetChild(1).jjtGetValue());
+		if(((String)node.jjtGetChild(1).jjtGetValue()).compareTo("[]")==0){
+			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
+				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
+				//Expression exp=(Expression)visit((SimpleNode) node.jjtGetChild(1).jjtGetChild(0), data);
+				//String s=(String)visit((SimpleNode) node.jjtGetChild(0), data);
+				return new TypeArray(type);
+			}
+			else{
+				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
+				return new TypeArray(type);
+			}
+		}
+		else return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
 	public Object visit(ABSTRACT_DECLARATOR node, Object data) {
 		debug("ABSTRACT_DECLARATOR", node.jjtGetValue(), node.jjtGetType());
 
-		return null;
+		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override

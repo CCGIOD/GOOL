@@ -2844,7 +2844,7 @@ void abstract_declarator()                      :
     "(" abstract_declarator()   ")"
     (abstract_declarator_suffix())+
    |
-    ("[" (constant_expression())? "]")+
+    ("[" (constant_expression())? "]")+ {jjtn000.value="[]";}
    |
     ptr_operator() abstract_declarator() )
    ]/*@bgen(jjtree)*/
@@ -3367,7 +3367,7 @@ void iteration_statement()                      :
                                                       }
 /*@egen*/ {jjtn000.value="dowhile";}
    |
-    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() | expression() ";" {s+="1";} | ";" )
+    "for" {s="for ";} "(" (LOOKAHEAD(3) declaration() {s+="1";} | expression() ";" {s+="1";} | ";" )
     (expression() {s+="2";})? ";" (expression() {s+="3";}) ? ")" statement()/*@bgen(jjtree)*/
                                                                              {
                                                                                jjtree.closeNodeScope(jjtn000, true);
@@ -4504,7 +4504,7 @@ void postfix_expression()                     :
  boolean jjtc000 = true;
  jjtree.openNodeScope(jjtn000);
  jjtn000.jjtSetFirstToken(getToken(1));
-/*@egen*/Token t; int c=0;}
+/*@egen*/Token t; int c=0; java.util.List<String> l = new java.util.ArrayList<String>(); l.add("i");}
 {/*@bgen(jjtree) POSTFIX_EXPRESSION */
    try {
 /*@egen*/
@@ -4513,9 +4513,24 @@ void postfix_expression()                     :
     ( LOOKAHEAD(2) (
      "[" expression() "]" {jjtn000.value="[]";}
     |
-     "(" ( expression_list() )? ")" {jjtn000.value="()";}
+     "(" ( expression_list() {l.add("e");} )? ")" 
+     {	
+     	jjtn000.value="()";
+    	if (l.size() > 0 && l.get(l.size()-1).compareTo("i") == 0){
+     		l.remove(l.size()-1);
+     		l.add("()");     		
+     	}
+     	else if (l.size() > 0 && l.get(l.size()-1).compareTo("e") == 0 && l.get(l.size()-2).compareTo("i") == 0){
+     	     l.remove(l.size()-1);
+     	     l.remove(l.size()-1);
+     	     l.add("()");
+     	     l.add("e");     	     
+     	}
+     	else
+     		l.add("()");
+     }
     |
-     "." id_expression()
+     "." id_expression() {l.add("i"); }
     |
      "->" id_expression()
     |
@@ -4528,7 +4543,7 @@ void postfix_expression()                     :
           jjtc000 = false;
           jjtn000.jjtSetLastToken(getToken(0));
         }
-/*@egen*/ {if (c > 1){ jjtn000.value="ERROR";} }
+/*@egen*/ {if (c > 1){ jjtn000.value="ERROR";} if (l.size() > 1){ jjtn000.value=l;}}
   |
    simple_type_specifier() "(" ( expression_list() )? ")"/*@bgen(jjtree)*/
    } catch (Throwable jjte000) {

@@ -1155,7 +1155,7 @@ void abstract_declarator() #ABSTRACT_DECLARATOR :
     "(" abstract_declarator()   ")"
     (abstract_declarator_suffix())+
    |
-    ("[" (constant_expression())? "]")+
+    ("[" (constant_expression())? "]")+ {jjtThis.value="[]";}
    |
     ptr_operator() abstract_declarator() )
    ]
