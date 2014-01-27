@@ -166,7 +166,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		catch (Exception e){return;}
 
 		RecognizerMatcher.init("cpp");
-		
+
 		for (SimpleNode a : ast)
 			cppr.visit(a, 0);
 		try {
@@ -1108,8 +1108,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	// TODO : ajouter les cast sur les types tableaux
 	public Object visit(TYPE_NAME node, Object data) {
 		debug("TYPE_NAME", node.jjtGetValue(), node.jjtGetType());
-		System.out.println(node.jjtGetChild(1).jjtGetValue());
-		if(((String)node.jjtGetChild(1).jjtGetValue()).compareTo("[]")==0){
+		//System.out.println(node.jjtGetChild(1).jjtGetValue());
+		if(node.jjtGetChild(1) != null && node.jjtGetChild(1).jjtGetValue() != null && node.jjtGetChild(1).jjtGetValue().toString().compareTo("[]")==0){
 			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
 				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
 				//Expression exp=(Expression)visit((SimpleNode) node.jjtGetChild(1).jjtGetChild(0), data);
