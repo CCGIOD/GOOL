@@ -1,0 +1,4 @@
+int f1 (){
+
+	for (i=0;;i++){ return 0; }
+}
