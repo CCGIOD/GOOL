@@ -16,7 +16,10 @@ static class B
 {
 
 };
-
+int main()
+{
+ int i= (double [10])k;
+}
 // Librairie
 // Transformer en java.io.File
 #include "un_fichier_nom_reconnue.h"
