@@ -2,6 +2,7 @@
 //package net.sourceforge.pmd.cpd.cppast;
 
 package gool.parser.cpp;
+import gool.parser.cpp.nodes.*;
 
 /** Token Manager. */
 public class CPPParserTokenManager implements CPPParserConstants

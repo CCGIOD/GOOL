@@ -1,5 +1,0 @@
-void main()
-{
-	List<String> data = new ArrayList<String>();
-	data.add("my name");
-}

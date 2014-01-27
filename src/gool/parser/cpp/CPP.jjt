@@ -28,7 +28,9 @@ options {
   TRACK_TOKENS=true;
   VISITOR=true;
   MULTI=true;
-  NODE_PREFIX="";
+  NODE_PREFIX="CPPAST_";
+  JJTREE_OUTPUT_DIRECTORY="nodes";
+  NODE_PACKAGE="gool.parser.cpp.nodes";
 }
 
 PARSER_BEGIN(CPPParser)

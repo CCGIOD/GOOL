@@ -9,7 +9,7 @@ public class SymtabManager {
     /**
      * Global symbol table indexed by the name of the scope (class/function).
      */
-    static Hashtable scopeTable = new Hashtable();
+    static Hashtable<String, Scope> scopeTable = new Hashtable<String, Scope>();
 
     /**
      * Stack of scopes. Currently max. nesting allowed is 100.

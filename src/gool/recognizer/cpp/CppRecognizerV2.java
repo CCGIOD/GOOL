@@ -59,7 +59,9 @@ import gool.generator.common.Platform;
 import gool.generator.cpp.CppPlatform;
 import gool.generator.java.JavaPlatform;
 import gool.generator.python.PythonPlatform;
-import gool.parser.cpp.*;
+import gool.parser.cpp.CPPParser;
+import gool.parser.cpp.Token;
+import gool.parser.cpp.nodes.*;
 import gool.recognizer.common.GoolLibraryClassAstBuilder;
 import gool.recognizer.common.RecognizerMatcher;
 
@@ -91,9 +93,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	private void setErrorType (String str){
 		this.errorType=str;
 	}
-	
+
 	private List<String> uncheckedLib;
-	
+
 	private void initUncheckedLib (){
 		this.uncheckedLib=new ArrayList<String>();
 	}
@@ -380,7 +382,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	/******************************************************************************************/
 
 	@Override
-	public Object visit(TRANSLATION_UNIT node, Object data) {
+	public Object visit(CPPAST_TRANSLATION_UNIT node, Object data) {
 		ClassDef unitaryClass = classExist(createClassNameFromFilename(node.jjtGetValue()));
 		if (unitaryClass == null){
 			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
@@ -392,7 +394,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(EXTERNAL_DECLARATION node, Object data) {
+	public Object visit(CPPAST_EXTERNAL_DECLARATION node, Object data) {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			if (node.jjtGetChild(i).jjtAccept(this, data) == null)
 				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
@@ -401,13 +403,13 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(FUNCTION_DEFINITION node, Object data) {
+	public Object visit(CPPAST_FUNCTION_DEFINITION node, Object data) {
 		String className = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_SCOPE");
 		if (className != null){
 			String name = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_NAME");
 			if (name == null){return null;}
 			if (setMethActive(className.replaceAll("::", ""),name) == null){return null;}
-			visit((FUNC_DECL_DEF) node.jjtGetChild(2), data);
+			visit((CPPAST_FUNC_DECL_DEF) node.jjtGetChild(2), data);
 			methActive=null;
 			return RETURN_OK;
 		}
@@ -426,7 +428,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		String name = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_NAME");
 		if (name == null){return null;}
 
-		Collection <Modifier> cm = (Collection <Modifier>) visit((DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
+		Collection <Modifier> cm = (Collection <Modifier>) visit((CPPAST_DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 		if (cm == null){setErrorType("modifiers"); return null;}
 
 		Meth m;
@@ -457,13 +459,13 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		m.addModifier(accesModifierActive);
 		stackClassActives.peek().addMethod(m);
 		methActive=m;
-		visit((FUNC_DECL_DEF) node.jjtGetChild(2), data);
+		visit((CPPAST_FUNC_DECL_DEF) node.jjtGetChild(2), data);
 		methActive=null;
 		return RETURN_OK;
 	}
 
 	@Override
-	public Object visit(FUNC_DECL_DEF node, Object data) {
+	public Object visit(CPPAST_FUNC_DECL_DEF node, Object data) {
 		if (node.jjtGetNumChildren() > 0){
 			Block blockToAdd = (Block) visit((SimpleNode) node.jjtGetChild(0),data);
 
@@ -474,12 +476,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(LINKAGE_SPECIFICATION node, Object data) {
+	public Object visit(CPPAST_LINKAGE_SPECIFICATION node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DECLARATION node, Object data) {
+	public Object visit(CPPAST_DECLARATION node, Object data) {
 		if (testChild(node, JJTSTORAGE_CLASS_SPECIFIER,"UNKNOW"))
 			return null;
 
@@ -489,6 +491,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		// Cas d'une déclaration de variable
 		else if (testChild(node, JJTDECLARATION_SPECIFIERS) && testChild(node, JJTINIT_DECLARATOR_LIST)){
 			Block blockToReturn = new Block();
+			boolean printErrorDef=false;
+
 			IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
 			if (type == null){return null;}
 			if (testChild((SimpleNode) node.jjtGetChild(1), JJTPTR_OPERATOR,"*")){
@@ -500,7 +504,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				}
 			}
 
-			Collection <Modifier> cm = (Collection <Modifier>) visit((DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
+			Collection <Modifier> cm = (Collection <Modifier>) visit((CPPAST_DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 			if (cm == null || cm.contains(Modifier.ABSTRACT)){cm = new ArrayList<Modifier>();}
 
 			SimpleNode nodeDecList = (SimpleNode) node.jjtGetChild(1); // <- INIT_DECLARATOR_LIST
@@ -512,7 +516,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				if (nodeDecList.jjtGetChild(i).jjtGetNumChildren() > 1 && nodeDecList.jjtGetChild(i).jjtGetChild(1).jjtGetId() == JJTINITIALIZER){
 					def = (Expression) visit((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1), data);
 					if (def == null)
-						getUnrocognizedPart(((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetLastToken(),"= ");
+						printErrorDef=true;
 				}
 
 				IType saveType = type;
@@ -536,6 +540,8 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				}			
 				// Initialisation avec constructeur non vide : Test t(1);
 				else if (nodeDecList.jjtGetChild(i).jjtGetNumChildren() > 1 && nodeDecList.jjtGetChild(i).jjtGetChild(1).jjtGetId() == JJTEXPRESSION_LIST){					
+					if (testChild(nodeDecList, JJTINITIALIZER))
+						return null;
 					VarDeclaration vd = new VarDeclaration(type, name);
 					vd.setModifiers(cm);
 					NewInstance ni = new NewInstance(vd);
@@ -547,11 +553,16 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				}
 				// Initialisation avec constructeur vide : Test t() ou Test t = new Test (...);
 				else if (type instanceof TypeClass){
+					if (testChild(nodeDecList, JJTINITIALIZER))
+						return null;
 					VarDeclaration vd = new VarDeclaration(type, name);
 					vd.setModifiers(cm);
 					NewInstance ni = new NewInstance(vd);
 					if (nodeDecList.jjtGetChild(i).jjtGetNumChildren() > 1 && nodeDecList.jjtGetChild(i).jjtGetChild(1).jjtGetId() == JJTINITIALIZER && def != null)
-						ni.addParameters(((ClassNew) def).getParameters());
+						if (!(def instanceof ClassNew))
+							return null;
+						else
+							ni.addParameters(((ClassNew) def).getParameters());
 					blockToReturn.addStatement(ni);
 				}
 				// Initialisation simple : int i; ou int i=1;
@@ -563,6 +574,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				}
 
 				type=saveType;
+				if (printErrorDef){
+					getUnrocognizedPart(((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetLastToken(),"= ");
+					printErrorDef=false;
+				}
 			}
 
 			return blockToReturn;
@@ -571,7 +586,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(TYPE_MODIFIERS node, Object data) {
+	public Object visit(CPPAST_TYPE_MODIFIERS node, Object data) {
 		if (node.jjtGetValue() != null){
 			return convertModToGoolMod(node.jjtGetValue().toString());
 		}
@@ -584,7 +599,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(DECLARATION_SPECIFIERS node, Object data) {
+	public Object visit(CPPAST_DECLARATION_SPECIFIERS node, Object data) {
 		if (data.toString().compareTo("GET_MODIFIERS") == 0){
 			Collection <Modifier> toReturn = new ArrayList<Modifier>();
 			for (int i=0;node.jjtGetChild(i).jjtGetId() == JJTTYPE_MODIFIERS;i++){
@@ -612,35 +627,36 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(SIMPLE_TYPE_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_SIMPLE_TYPE_SPECIFIER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(SCOPE_OVERRIDE_LOOKAHEAD node, Object data) {
+	public Object visit(CPPAST_SCOPE_OVERRIDE_LOOKAHEAD node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(SCOPE_OVERRIDE node, Object data) {
-		//return new Identifier (new TypeVar("typevar"),node.jjtGetValue().toString());
+	public Object visit(CPPAST_SCOPE_OVERRIDE node, Object data){
+		if (node.jjtGetValue() == null || node.jjtGetNumChildren() > 0)
+			return null;
 		return node.jjtGetValue().toString();
 	}
 
 	@Override
-	public Object visit(QUALIFIED_ID node, Object data) {
+	public Object visit(CPPAST_QUALIFIED_ID node, Object data) {
 		if (data.toString().compareTo("GET_SCOPE") == 0)
 			return returnChild(JJTSCOPE_OVERRIDE, node, 0, data);
 		return node.jjtGetValue();
 	}
 
 	@Override
-	public Object visit(PTR_TO_MEMBER node, Object data) {
+	public Object visit(CPPAST_PTR_TO_MEMBER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(QUALIFIED_TYPE node, Object data) {
+	public Object visit(CPPAST_QUALIFIED_TYPE node, Object data) {
 		String cppClass = node.jjtGetChild(0).jjtGetValue().toString();
 		String goolClass = RecognizerMatcher.matchClass(cppClass);
 		if (goolClass != null) {
@@ -655,12 +671,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(TYPE_QUALIFIER node, Object data) {
+	public Object visit(CPPAST_TYPE_QUALIFIER node, Object data) {
 		return convertModToGoolMod(node.jjtGetValue().toString());
 	}
 
 	@Override
-	public Object visit(STORAGE_CLASS_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_STORAGE_CLASS_SPECIFIER node, Object data) {
 		if (node.jjtGetValue() == null){
 			return null;
 		}
@@ -668,17 +684,17 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(BUILTIN_TYPE_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_BUILTIN_TYPE_SPECIFIER node, Object data) {
 		return convertIType(node.jjtGetValue().toString()); 
 	}
 
 	@Override
-	public Object visit(INIT_DECLARATOR_LIST node, Object data) {
+	public Object visit(CPPAST_INIT_DECLARATOR_LIST node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(INIT_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_INIT_DECLARATOR node, Object data) {
 		if (data.toString().compareTo("GET_NAME") == 0 || data.toString().startsWith("GET_DIM")){
 			return returnChild(JJTDECLARATOR, node, 0, data);
 		}
@@ -689,12 +705,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(CLASS_HEAD node, Object data) {
+	public Object visit(CPPAST_CLASS_HEAD node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(CLASS_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_CLASS_SPECIFIER node, Object data) {
 		if (node.jjtGetValue() == null){
 			setErrorType("structure non gérée"); 
 			return null;
@@ -726,7 +742,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(BASE_CLAUSE node, Object data) {
+	public Object visit(CPPAST_BASE_CLAUSE node, Object data) {
 		if (node.jjtGetNumChildren() == 1){
 			String name = ((SimpleNode) node.jjtGetChild(0)).jjtGetValue().toString();
 			stackClassActives.peek().setParentClass(new TypeClass(name));
@@ -738,17 +754,17 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(BASE_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_BASE_SPECIFIER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(ACCESS_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_ACCESS_SPECIFIER node, Object data) {
 		return node.jjtGetValue().toString();
 	}
 
 	@Override
-	public Object visit(MEMBER_DECLARATION node, Object data) {
+	public Object visit(CPPAST_MEMBER_DECLARATION node, Object data) {
 		if (testChild(node, JJTACCESS_SPECIFIER)){
 			accesModifierActive=convertModToGoolMod((String) returnChild(JJTACCESS_SPECIFIER, node, 0, data));
 		}
@@ -792,23 +808,23 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(MEMBER_DECLARATOR_LIST node, Object data) {
+	public Object visit(CPPAST_MEMBER_DECLARATOR_LIST node, Object data) {
 		node.childrenAccept(this, data);
 		return RETURN_OK;
 	}
 
 	@Override
-	public Object visit(MEMBER_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_MEMBER_DECLARATOR node, Object data) {
 		return visit((SimpleNode) node.jjtGetChild(0),data);
 	}
 
 	@Override
-	public Object visit(CONVERSION_FUNCTION_DECL_OR_DEF node, Object data) {
+	public Object visit(CPPAST_CONVERSION_FUNCTION_DECL_OR_DEF node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(ENUM_SPECIFIER node, Object data) {
+	public Object visit(CPPAST_ENUM_SPECIFIER node, Object data) {
 		ClassDef cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
 		cd.addMethod(new Constructor());
 		cd.setIsEnum(true);
@@ -820,7 +836,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ENUMERATOR_LIST node, Object data) {
+	public Object visit(CPPAST_ENUMERATOR_LIST node, Object data) {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			if (visit((SimpleNode) node.jjtGetChild(i), data) == null)
 				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
@@ -829,7 +845,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ENUMERATOR node, Object data) {
+	public Object visit(CPPAST_ENUMERATOR node, Object data) {
 		Field f = new Field(node.jjtGetValue().toString(),new TypeClass(data.toString()),new ClassNew(new TypeClass(data.toString())));
 		f.addModifier(Modifier.STATIC);
 		f.addModifier(Modifier.FINAL);
@@ -838,17 +854,17 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(PTR_OPERATOR node, Object data) {
+	public Object visit(CPPAST_PTR_OPERATOR node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(CV_QUALIFIER_SEQ node, Object data) {
+	public Object visit(CPPAST_CV_QUALIFIER_SEQ node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DECLARATOR node, Object data) {
+	public Object visit(CPPAST_DECLARATOR node, Object data) {
 		if (node.jjtGetChild(0).jjtGetId() == JJTDIRECT_DECLARATOR){
 			return returnChild(JJTDIRECT_DECLARATOR, node, 0, data);
 		}
@@ -859,18 +875,18 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(DIRECT_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_DIRECT_DECLARATOR node, Object data) {
 		if (data.toString().startsWith("GET_DIM")){
 			return returnChild(JJTDECLARATOR_SUFFIXES, node, 1, data);
 		}
 		if (node.jjtGetValue() != null){
-			return visit((QUALIFIED_ID) node.jjtGetChild(0), data);
+			return visit((CPPAST_QUALIFIED_ID) node.jjtGetChild(0), data);
 		}
 		return null;
 	}
 
 	@Override
-	public Object visit(DECLARATOR_SUFFIXES node, Object data) {
+	public Object visit(CPPAST_DECLARATOR_SUFFIXES node, Object data) {
 		if (data.toString().compareTo("GET_DIM") == 0)
 			return Integer.parseInt(node.jjtGetValue().toString());
 		else{
@@ -885,12 +901,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(FUNCTION_DECLARATOR_LOOKAHEAD node, Object data) {
+	public Object visit(CPPAST_FUNCTION_DECLARATOR_LOOKAHEAD node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(FUNCTION_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_FUNCTION_DECLARATOR node, Object data) {
 		if (node.jjtGetChild(0).jjtGetId() == JJTFUNCTION_DIRECT_DECLARATOR){
 			return returnChild(JJTFUNCTION_DIRECT_DECLARATOR, node, 0, data);
 		}
@@ -901,7 +917,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(FUNCTION_DIRECT_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_FUNCTION_DIRECT_DECLARATOR node, Object data) {
 		if (data.toString().compareTo("GET_EXCEP") == 0)
 			return returnChild(JJTEXCEPTION_SPEC, node, 1, data);
 		else if (data.toString().compareTo("GET_NAME") == 0 || data.toString().compareTo("GET_SCOPE") == 0)
@@ -912,12 +928,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(DTOR_CTOR_DECL_SPEC node, Object data) {
+	public Object visit(CPPAST_DTOR_CTOR_DECL_SPEC node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DTOR_DEFINITION node, Object data) {
+	public Object visit(CPPAST_DTOR_DEFINITION node, Object data) {
 		Constructor c = new Constructor();
 		if (testChild(node, JJTPARAMETER_LIST)){
 			List<VarDeclaration> listVD = (List<VarDeclaration>) returnChild(JJTDTOR_DECLARATOR, node, 1, "GET_PARAMS");
@@ -928,52 +944,52 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 		stackClassActives.peek().addMethod(c);
 		methActive=c;
-		visit((COMPOUND_STATEMENT) node.jjtGetChild(2), data);
+		visit((CPPAST_COMPOUND_STATEMENT) node.jjtGetChild(2), data);
 		methActive=null;
 		return RETURN_OK;
 	}
 
 	@Override
-	public Object visit(CTOR_DEFINITION node, Object data) {
+	public Object visit(CPPAST_CTOR_DEFINITION node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(CTOR_DECLARATOR_LOOKAHEAD node, Object data) {
+	public Object visit(CPPAST_CTOR_DECLARATOR_LOOKAHEAD node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(CTOR_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_CTOR_DECLARATOR node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(CTOR_INITIALIZER node, Object data) {
+	public Object visit(CPPAST_CTOR_INITIALIZER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(SUPERCLASS_INIT node, Object data) {
+	public Object visit(CPPAST_SUPERCLASS_INIT node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DTOR_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_DTOR_DECLARATOR node, Object data) {
 		if (node.jjtGetNumChildren() > 1)
 			return null;
 		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
-	public Object visit(SIMPLE_DTOR_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_SIMPLE_DTOR_DECLARATOR node, Object data) {
 		if (node.jjtGetNumChildren() > 1)
 			return null;
 		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
-	public Object visit(PARAMETER_LIST node, Object data) {
+	public Object visit(CPPAST_PARAMETER_LIST node, Object data) {
 		if (node.jjtGetNumChildren() == 0)
 			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 		else {
@@ -986,7 +1002,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(PARAMETER_DECLARATION_LIST node, Object data) {
+	public Object visit(CPPAST_PARAMETER_DECLARATION_LIST node, Object data) {
 		List<VarDeclaration> toReturn = new ArrayList<VarDeclaration>();
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			VarDeclaration vd = (VarDeclaration) visit((SimpleNode) node.jjtGetChild(i), data);
@@ -997,7 +1013,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(PARAMETER_DECLARATION node, Object data) {
+	public Object visit(CPPAST_PARAMETER_DECLARATION node, Object data) {
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
 		if (type == null){
 			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
@@ -1018,7 +1034,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 			return null;
 		}
 
-		Collection <Modifier> cm = (Collection <Modifier>) visit((DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
+		Collection <Modifier> cm = (Collection <Modifier>) visit((CPPAST_DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 		if (cm == null){
 			setErrorType("modifiers");
 			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
@@ -1031,14 +1047,14 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(INITIALIZER node, Object data) {
+	public Object visit(CPPAST_INITIALIZER node, Object data) {
 		if (node.jjtGetValue() == null)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(TYPE_NAME node, Object data) {
+	public Object visit(CPPAST_TYPE_NAME node, Object data) {
 		if(node.jjtGetChild(1) != null && node.jjtGetChild(1).jjtGetValue() != null && node.jjtGetChild(1).jjtGetValue().toString().compareTo("[]")==0){
 			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
 				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
@@ -1055,47 +1071,47 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ABSTRACT_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_ABSTRACT_DECLARATOR node, Object data) {
 		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
-	public Object visit(ABSTRACT_DECLARATOR_SUFFIX node, Object data) {
+	public Object visit(CPPAST_ABSTRACT_DECLARATOR_SUFFIX node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_HEAD node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_HEAD node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_PARAMETER_LIST node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_PARAMETER_LIST node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_PARAMETER node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_PARAMETER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_ID node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_ID node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_ARGUMENT_LIST node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_ARGUMENT_LIST node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(TEMPLATE_ARGUMENT node, Object data) {
+	public Object visit(CPPAST_TEMPLATE_ARGUMENT node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(STATEMENT_LIST node, Object data) {
+	public Object visit(CPPAST_STATEMENT_LIST node, Object data) {
 		Block b = new Block();
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			Statement s = (Statement) visit((SimpleNode) node.jjtGetChild(i) , data);
@@ -1108,14 +1124,14 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(STATEMENT node, Object data) {
+	public Object visit(CPPAST_STATEMENT node, Object data) {
 		if (node.jjtGetNumChildren() != 1)
 			return null;
 		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
 
 	@Override
-	public Object visit(LABELED_STATEMENT node, Object data) {
+	public Object visit(CPPAST_LABELED_STATEMENT node, Object data) {
 		if (node.jjtGetValue() != null){
 			Expression expCase = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			Block stmtCase = (Block) visit((SimpleNode) node.jjtGetChild(1),data);
@@ -1126,14 +1142,14 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(COMPOUND_STATEMENT node, Object data) {
+	public Object visit(CPPAST_COMPOUND_STATEMENT node, Object data) {
 		if (node.jjtGetNumChildren() > 0)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return new Block();
 	}
 
 	@Override
-	public Object visit(SELECTION_STATEMENT node, Object data) {
+	public Object visit(CPPAST_SELECTION_STATEMENT node, Object data) {
 		if (((String) node.jjtGetValue()).compareTo("if") == 0){
 			Expression cond = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (cond == null){return null;}
@@ -1168,7 +1184,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ITERATION_STATEMENT node, Object data) {
+	public Object visit(CPPAST_ITERATION_STATEMENT node, Object data) {
 		if (((String) node.jjtGetValue()).compareTo("while")== 0){
 			Expression condWhile = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (condWhile == null){return null;}
@@ -1235,7 +1251,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(JUMP_STATEMENT node, Object data) {
+	public Object visit(CPPAST_JUMP_STATEMENT node, Object data) {
 		if (node.jjtGetValue() != null){
 			Expression tr = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (tr == null){return null;}
@@ -1245,7 +1261,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(TRY_BLOCK node, Object data) {
+	public Object visit(CPPAST_TRY_BLOCK node, Object data) {
 		Block block = (Block) visit((SimpleNode) node.jjtGetChild(0),data);
 		if (block == null){return null;}
 		Block finallyBlock = new Block();
@@ -1269,7 +1285,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(HANDLER node, Object data) {
+	public Object visit(CPPAST_HANDLER node, Object data) {
 		if (((String) node.jjtGetValue()).compareTo("catch") == 0){
 			List<VarDeclaration> listVD = (List<VarDeclaration>) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (listVD == null || listVD.size() != 1){return null;}
@@ -1283,26 +1299,26 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(EXCEPTION_DECLARATION node, Object data) {
+	public Object visit(CPPAST_EXCEPTION_DECLARATION node, Object data) {
 		if (node.jjtGetNumChildren() > 0)
 			return visit((SimpleNode) node.jjtGetChild(0),data);
 		return null;
 	}
 
 	@Override
-	public Object visit(THROW_STATEMENT node, Object data) {
+	public Object visit(CPPAST_THROW_STATEMENT node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(EXPRESSION node, Object data) {
+	public Object visit(CPPAST_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(ASSIGNMENT_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_ASSIGNMENT_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren()>1){
 			Node varAss = (Node) visit((SimpleNode) node.jjtGetChild(0),data);
 			Expression expAss = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
@@ -1346,62 +1362,62 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 
 	@Override
-	public Object visit(CONDITIONAL_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_CONDITIONAL_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(CONSTANT_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_CONSTANT_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(LOGICAL_OR_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_LOGICAL_OR_EXPRESSION node, Object data) {
 		return getBooleanExpression(node,data);
 	}
 
 	@Override
-	public Object visit(LOGICAL_AND_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_LOGICAL_AND_EXPRESSION node, Object data) {
 		return getBooleanExpression(node,data);
 	}
 
 	@Override
-	public Object visit(INCLUSIVE_OR_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_INCLUSIVE_OR_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(EXCLUSIVE_OR_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_EXCLUSIVE_OR_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(AND_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_AND_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(EQUALITY_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_EQUALITY_EXPRESSION node, Object data) {
 		return getBooleanExpression(node,data);
 	}
 
 	@Override
-	public Object visit(RELATIONAL_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_RELATIONAL_EXPRESSION node, Object data) {
 		return getBooleanExpression(node,data);
 	}
 
 	@Override
-	public Object visit(SHIFT_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_SHIFT_EXPRESSION node, Object data) {
 		if (isFunctionPrint(node,data)){							
 			stackClassActives.peek().addDependency(new SystemOutDependency());
 			GoolCall gc = new SystemOutPrintCall();
@@ -1414,24 +1430,24 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ADDITIVE_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_ADDITIVE_EXPRESSION node, Object data) {
 		return getBinaryExpression (node, node.jjtGetNumChildren()-1, (List<?>) node.jjtGetValue(), data);
 	}
 
 	@Override
-	public Object visit(MULTIPLICATIVE_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_MULTIPLICATIVE_EXPRESSION node, Object data) {
 		return getBinaryExpression (node, node.jjtGetNumChildren()-1, (List<?>) node.jjtGetValue(), data);
 	}
 
 	@Override
-	public Object visit(PM_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_PM_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(CAST_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_CAST_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren() > 1){
 			Expression exp = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (exp == null){return null;}
@@ -1453,7 +1469,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(UNARY_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_UNARY_EXPRESSION node, Object data) {
 		if (node.jjtGetChild(0).jjtGetId() == JJTTYPE_NAME)
 			return null;
 		else if (!data.toString().startsWith("GET_") && Integer.parseInt(data.toString()) > 1){
@@ -1498,43 +1514,61 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(NEW_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_NEW_EXPRESSION node, Object data) {
 		IType type = (TypeClass) visit((SimpleNode) node.jjtGetChild(0).jjtGetChild(0), data);
-		if (type == null){return null;}		
+		if (type == null){return null;}	
+
+		if (testChild(node,JJTDIRECT_NEW_DECLARATOR)){
+			List <Expression> listExpr = (List <Expression>) visit((SimpleNode) node.jjtGetChild(0).jjtGetChild(1).jjtGetChild(0),data);
+			if (listExpr == null){return null;}
+			else if (listExpr.size() > 1){setErrorType("dimension > 1 non gérée"); return null;}
+			return new ArrayNew(type,listExpr,listExpr);
+		}
+
 		ClassNew cn = new ClassNew(type);
-		List <Expression> listExpr = (List <Expression>) visit((SimpleNode) node.jjtGetChild(1).jjtGetChild(0),data);
-		if (listExpr == null){return null;}
-		cn.addParameters(listExpr);
+		if (node.jjtGetNumChildren() > 1 && node.jjtGetChild(1).jjtGetNumChildren() > 0){
+			List <Expression> listExpr = (List <Expression>) visit((SimpleNode) node.jjtGetChild(1).jjtGetChild(0),data);
+			if (listExpr == null){return null;}
+			cn.addParameters(listExpr);
+		}
 		return cn;
 	}
 
 	@Override
-	public Object visit(NEW_TYPE_ID node, Object data) {
+	public Object visit(CPPAST_NEW_TYPE_ID node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(NEW_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_NEW_DECLARATOR node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DIRECT_NEW_DECLARATOR node, Object data) {
+	public Object visit(CPPAST_DIRECT_NEW_DECLARATOR node, Object data) {
+		List <Expression> listExp = new ArrayList<Expression>();
+		for (int i=0;i<node.jjtGetNumChildren();i++){
+			Expression e = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
+			if (e == null)
+				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+			else
+				listExp.add(e);
+		}
+		return listExp;
+	}
+
+	@Override
+	public Object visit(CPPAST_NEW_INITIALIZER node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(NEW_INITIALIZER node, Object data) {
+	public Object visit(CPPAST_DELETE_EXPRESSION node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(DELETE_EXPRESSION node, Object data) {
-		return null;
-	}
-
-	@Override
-	public Object visit(UNARY_OPERATOR node, Object data) {
+	public Object visit(CPPAST_UNARY_OPERATOR node, Object data) {
 		return null;
 	}
 
@@ -1577,7 +1611,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(POSTFIX_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_POSTFIX_EXPRESSION node, Object data) {
 		if (node.jjtGetValue() instanceof List<?>){
 			List<String> l = (List<String>) node.jjtGetValue();			
 			return getLinkedTarget(node, node.jjtGetNumChildren()-1, l, data);
@@ -1613,7 +1647,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(ID_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_ID_EXPRESSION node, Object data) {
 		if (data.toString().compareTo("GET_ID_FCT") == 0 && node.jjtGetNumChildren() > 0){
 			String id = (String) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (id == null){return null;}
@@ -1629,7 +1663,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(PRIMARY_EXPRESSION node, Object data) {
+	public Object visit(CPPAST_PRIMARY_EXPRESSION node, Object data) {
 		if (node.jjtGetValue() != null && node.jjtGetValue().toString().compareTo("this") == 0)
 			return new This(stackClassActives.peek().getType());
 		else if (node.jjtGetNumChildren() == 0)
@@ -1640,7 +1674,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(EXPRESSION_LIST node, Object data) {
+	public Object visit(CPPAST_EXPRESSION_LIST node, Object data) {
 		List <Expression> listExp = new ArrayList<Expression>();
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			Expression e = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
@@ -1653,7 +1687,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(CONSTANT node, Object data) {
+	public Object visit(CPPAST_CONSTANT node, Object data) {
 		if (((String) node.jjtGetValue()).startsWith("'") || ((String) node.jjtGetValue()).endsWith("'"))
 			return new Constant(convertIType((String) node.jjtGetType()),((String) node.jjtGetValue()).subSequence(1, ((String) node.jjtGetValue()).length()-1));
 		else
@@ -1661,19 +1695,19 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(OPTOR node, Object data) {
+	public Object visit(CPPAST_OPTOR node, Object data) {
 		return null;
 	}
 
 	@Override
-	public Object visit(EXCEPTION_SPEC node, Object data) {
+	public Object visit(CPPAST_EXCEPTION_SPEC node, Object data) {
 		if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
 		return null;
 	}
 
 	@Override
-	public Object visit(EXCEPTION_LIST node, Object data) {
+	public Object visit(CPPAST_EXCEPTION_LIST node, Object data) {
 		List<IType> listType = new ArrayList<IType>();
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			IType type = (IType) returnChild(JJTTYPE_NAME, node, 0, data);
@@ -1695,11 +1729,11 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	public Object visit(INCLUDE_SPECIFER node, Object data) {
+	public Object visit(CPPAST_INCLUDE_SPECIFER node, Object data) {
 		for (String lib : uncheckedLib)
 			if (((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1).compareTo(lib) == 0)
 				return RETURN_OK;	
-		
+
 		//System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
 		// The destination package is either null or that specified by the
 		// visited package

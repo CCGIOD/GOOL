@@ -11,7 +11,7 @@ public class ClassScope extends Scope {
     /**
      * The list of scopes corresponding to classes this class inherits.
      */
-    Vector superClasses;
+    Vector<Scope> superClasses;
 
     /**
      * Add a super class.
@@ -21,7 +21,7 @@ public class ClassScope extends Scope {
             return;
 
         if (superClasses == null)
-            superClasses = new Vector();
+            superClasses = new Vector<Scope>();
 
         superClasses.addElement(sc);
     }
