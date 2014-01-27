@@ -1196,6 +1196,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 					if (pattern.charAt(i) == '1'){
 						initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
 						if (initFor instanceof Block){
+							if (((Block) initFor).getStatements().size() > 1){
+								setErrorType("multiples déclarations dans un for");
+								return null;
+							}
 							initFor=((Block) initFor).getStatements().get(0); 
 						}
 						if (initFor == null)
