@@ -73,7 +73,7 @@ import java.util.List;
 import java.util.Stack;
 
 @SuppressWarnings("unchecked")
-public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants {
+public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	public final int RETURN_OK = 1;
 
@@ -117,7 +117,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 
 	// Constructeur
-	public CppRecognizerV2 (){
+	public CppRecognizer (){
 		this.AST=CPPParser.getCppAST();
 	}
 
@@ -128,7 +128,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 
 	public static void main (String args[]){
-		CppRecognizerV2 cppr = new CppRecognizerV2();
+		CppRecognizer cppr = new CppRecognizer();
 		cppr.initUncheckedLib();
 		List<SimpleNode> ast;
 
