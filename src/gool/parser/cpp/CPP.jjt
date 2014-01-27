@@ -193,13 +193,29 @@ SKIP :
 |
   "/*" : IN_COMMENT
 |
+  "#define" : PREPROCESSOR_OUTPUT
+|
+  "#undef" : PREPROCESSOR_OUTPUT
+|
   "#ifdef" : PREPROCESSOR_OUTPUT
 |
   "#ifndef" : PREPROCESSOR_OUTPUT
 |
+  "#if" : PREPROCESSOR_OUTPUT
+|
+  "#elif" : PREPROCESSOR_OUTPUT
+|
+  "#else" : PREPROCESSOR_OUTPUT
+|
   "#endif" : PREPROCESSOR_OUTPUT
 |
-  "#define" : PREPROCESSOR_OUTPUT
+  "#error" : PREPROCESSOR_OUTPUT
+|
+  "#line" : PREPROCESSOR_OUTPUT
+|
+  "#pragma" : PREPROCESSOR_OUTPUT
+|
+  "# " : PREPROCESSOR_OUTPUT
 }
 
 <IN_LINE_COMMENT> SKIP:
