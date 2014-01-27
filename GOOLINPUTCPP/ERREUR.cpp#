@@ -1,3 +1,5 @@
+#include "un_fichier_nom_reconnue.h"
+
 typedef short SmallNumber;
 
 auto extern static int i;
@@ -5,3 +7,16 @@ auto extern static int i;
 int main (int i, ...){}
 int main (...){}
 
+union MonUnion
+{
+    int entier;
+    double reel;
+};
+
+struct MaStruct
+{
+	int i;
+	char c;
+};
+
+int i= (double [5])k;
