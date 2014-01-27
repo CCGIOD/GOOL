@@ -11,20 +11,50 @@
 	-> analyser ce qui l'est possible de faire dans une fonction qui n'est pas traiter et identifier le code correspondant en c++
 	-> tester ce code :
 		=> soit le code n'est pas reconnu et il y a un message d'erreur : OK
-		=> soit le code est partiellement interprété sans message d'erreur (ex : i++; devient i;) : ajouter un traitement de l'erreur
-	==> Erreur à traiter à identifier :
-		->
-- Ajouter la  gestion de "#include" pour créer une librairie GOOL.
+		=> soit le code est partiellement interprété sans message d'erreur (ex : i++; devient i;) :
+		   ajouter un traitement de l'erreur
 - Finaliser le CPP.jjt et séparer les classes de types NODE et le reste (option "prefix" et/ou option "directory")
 - FAIRE DES TESTS POUR CHASSER LES BUGS /!\
-  LISTE DES BUGS CONNUS à CORRIGER :
-	->	
 
 
 <SOUTENANCE>
 
-- Fichiers tests fonctionnels pour la soutenance (ex: fibo, classe Printer, etc ...)
-- Schéma sur l'AST C++
-- Schéma sur les transformations 
-- Script bash de démo
+- Explication sur le C++ et sur les différences C++/Java
+	-> les pointeurs
+	-> dire que GOOL a été fait par rapport à JAVA et que C++ n'est pas très adapté
 
+- Explication sur le parser 
+	-> vieux parser
+	-> Scope désactivé pour traiter plusieurs fichiers (sémantique non souhaité)
+	-> AST pas simple à traiter (bcp de noeud pour rien ou un noeud pour beaucoup de chose)
+	=> Préparer des exemples d'AST générés (JOHAN)
+	=> Préparer un schéma de l'AST (diagramme de classe par exemple) (JOHAN)
+	=> Cibler des endroits important du code du parser (CPP.jjt, script build) à montrer en détail
+
+- Explication sur le recognizer
+	-> Une fonction par type de noeud à visiter
+	-> On identifie dans l'arbre ce qui correspond à un élément GOOL ( complexe donc des erreurs et des choses manquantes)
+	-> ajout de traitements d'erreur à certain endroit (utilisation des tokens) : 
+	   besoin de faire la différence entre les erreurs qui font sauter toutes une instruction ou juste une partie.
+	-> arbres trop complexes donc toujours des erreurs non traités dans certains cas
+	=> Préparer des exemples (réels) sur ce qui est reconnu (ex: fibo, classe Printer, etc ...)
+	=> Préparer des exemples pour les erreurs traitées
+	=> Préparer un schéma sur l'appel des fonctions du recognizer sur un exemple simple
+	   (ex : main->visit(Translation_unit->external_dec-> ... -> constant)
+	=> Cibler des endroits important du code du recognizer à montrer en détail
+
+- Explication sur le débuts des librairis
+	-> Reconnaissance de #include
+	-> Reconnaissance du typage
+	-> Pas de reconnaissance d'appel au fonctions
+	=> Préparer une explication sur ce qu'il manque pour que ca fonctionne
+
+- Explication sur l'éventuelle ajout sur notre travail :
+	-> modification du parser (éventuellement nécessaire)
+	-> ajout dans le recognizer (/!\ risque de tous casser)
+	=> Préparer une fiche détaillée en readme à fournir avec le code
+
+- Limites du projet
+	-> Seulement Java en output ...
+	-> Erreurs car grammaire très complexes et parser pas parfait
+	-> Langage input trop simplifié
