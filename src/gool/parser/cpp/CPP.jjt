@@ -736,9 +736,10 @@ void class_specifier() #CLASS_SPECIFIER :
 {
    ClassScope sc = null;
    Token t;
+   boolean testPrefix;
 }
 {
-   ("struct" | "union" | "class" )
+   ("struct" {testPrefix=false;} | "union" {testPrefix=false;} | "class" {testPrefix=true;} )
    (
     "{"
         {
@@ -752,7 +753,7 @@ void class_specifier() #CLASS_SPECIFIER :
    |
     LOOKAHEAD(2) t = <ID>
      {
-        jjtThis.value = t.image; sc = (ClassScope)sym.OpenScope(t.image, true);
+        if (testPrefix){jjtThis.value = t.image;} sc = (ClassScope)sym.OpenScope(t.image, true);
      }
      (base_clause(sc))?
     "{"
@@ -763,7 +764,7 @@ void class_specifier() #CLASS_SPECIFIER :
         }
    |
     t=<ID> (LOOKAHEAD(2) "<" template_argument_list()  ">")?
-    { jjtThis.value = t.image; sym.PutTypeName(t.image); }
+    { if (testPrefix){jjtThis.value = t.image;} sym.PutTypeName(t.image); }
    )
 }
 
@@ -1551,7 +1552,7 @@ void postfix_expression() #POSTFIX_EXPRESSION :
     |
      "." id_expression() {l.add("i"); }
     |
-     "->" id_expression()
+     "->" id_expression() {l.add("i"); }
     |
      "++" {jjtThis.value="++"; c++;}
     |

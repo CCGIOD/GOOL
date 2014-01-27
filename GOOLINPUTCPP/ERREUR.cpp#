@@ -5,3 +5,15 @@ auto extern static int i;
 int main (int i, ...){}
 int main (...){}
 
+union MonUnion
+{
+    int entier;
+    double reel;
+};
+
+struct MaStruct
+{
+	int i;
+	char c;
+};
+
