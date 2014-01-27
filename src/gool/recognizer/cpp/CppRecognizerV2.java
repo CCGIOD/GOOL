@@ -1034,8 +1034,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		if(node.jjtGetChild(1) != null && node.jjtGetChild(1).jjtGetValue() != null && node.jjtGetChild(1).jjtGetValue().toString().compareTo("[]")==0){
 			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
 				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
-				//Expression exp=(Expression)visit((SimpleNode) node.jjtGetChild(1).jjtGetChild(0), data);
-				//String s=(String)visit((SimpleNode) node.jjtGetChild(0), data);
+				getUnrocognizedPart(((SimpleNode)node.jjtGetChild(1).jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1).jjtGetChild(0)).jjtGetLastToken());
 				return new TypeArray(type);
 			}
 			else{
