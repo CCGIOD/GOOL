@@ -1,3 +1,5 @@
+#include "un_fichier_nom_reconnue.h"
+
 typedef short SmallNumber;
 
 auto extern static int i;
@@ -17,3 +19,4 @@ struct MaStruct
 	char c;
 };
 
+int i= (double [5])k;

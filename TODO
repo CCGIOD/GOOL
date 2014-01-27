@@ -55,6 +55,6 @@
 	=> Préparer une fiche détaillée en readme à fournir avec le code
 
 - Limites du projet
-	-> Seulement Java en output ...
+	-> Correctement seulement Java en output (enlever le for pour python, enlever init des var en c++)
 	-> Erreurs car grammaire très complexes et parser pas parfait
 	-> Langage input trop simplifié

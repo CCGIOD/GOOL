@@ -4,7 +4,7 @@ class A
 		~A(int i){int i;}
 		void m(int i);
 		virtual void f1 ();
-		int main (){ new A (1,2); i++; ++i; }
+		int main (){ new A (1,2); int i; i++; ++i; }
 
 	private:
 		const double d;
@@ -16,13 +16,11 @@ static class B
 {
 
 };
-int main()
-{
- int i= (double [10])k;
-}
+
+
 // Librairie
 // Transformer en java.io.File
-#include "un_fichier_nom_reconnue.h"
+
 #include "GoolFileImpl.h"
 int f(){
 	GoolFileImpl f("azerty1");
@@ -69,6 +67,7 @@ int main (){
 
 	int i = 5;
 	float j = (float) 5;
+ 	int i= (double [])k;
 
 	char* str;
 	char* str="CHEVAL";

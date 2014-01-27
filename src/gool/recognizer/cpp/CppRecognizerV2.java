@@ -56,7 +56,9 @@ import gool.ast.type.TypeVar;
 import gool.ast.type.TypeVoid;
 import gool.generator.GeneratorHelper;
 import gool.generator.common.Platform;
+import gool.generator.cpp.CppPlatform;
 import gool.generator.java.JavaPlatform;
+import gool.generator.python.PythonPlatform;
 import gool.parser.cpp.*;
 import gool.recognizer.common.GoolLibraryClassAstBuilder;
 import gool.recognizer.common.RecognizerMatcher;
@@ -89,6 +91,12 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	private void setErrorType (String str){
 		this.errorType=str;
 	}
+	
+	private List<String> uncheckedLib;
+	
+	private void initUncheckedLib (){
+		this.uncheckedLib=new ArrayList<String>();
+	}
 
 	// Langage output (fixé à JAVA pour les tests)
 	private Platform defaultPlatform = JavaPlatform.getInstance();
@@ -119,6 +127,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	public static void main (String args[]){
 		CppRecognizerV2 cppr = new CppRecognizerV2();
+		cppr.initUncheckedLib();
 		List<SimpleNode> ast;
 
 		try{
@@ -1029,11 +1038,11 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	}
 
 	@Override
-	// TODO : ajouter les cast sur les types tableaux
 	public Object visit(TYPE_NAME node, Object data) {
 		if(node.jjtGetChild(1) != null && node.jjtGetChild(1).jjtGetValue() != null && node.jjtGetChild(1).jjtGetValue().toString().compareTo("[]")==0){
 			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
 				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
+				setErrorType("pas d'init. dans un cast en tableau");
 				getUnrocognizedPart(((SimpleNode)node.jjtGetChild(1).jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1).jjtGetChild(0)).jjtGetLastToken());
 				return new TypeArray(type);
 			}
@@ -1100,7 +1109,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(STATEMENT node, Object data) {
-		if (node.jjtGetNumChildren() > 1)
+		if (node.jjtGetNumChildren() != 1)
 			return null;
 		return visit((SimpleNode) node.jjtGetChild(0), data);
 	}
@@ -1181,11 +1190,14 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				Statement stFor=null;
 				Statement initFor=null;
 				Expression condFor=null;
-				Statement updater = null;
+				Statement updater=null;
 
 				for (int i=0;i<node.jjtGetNumChildren()-1;i++){
 					if (pattern.charAt(i) == '1'){
 						initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
+						if (initFor instanceof Block){
+							initFor=((Block) initFor).getStatements().get(0); 
+						}
 						if (initFor == null)
 							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 					}
@@ -1288,7 +1300,6 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 	@Override
 	public Object visit(ASSIGNMENT_EXPRESSION node, Object data) {
 		if (node.jjtGetNumChildren()>1){
-
 			Node varAss = (Node) visit((SimpleNode) node.jjtGetChild(0),data);
 			Expression expAss = (Expression) visit((SimpleNode) node.jjtGetChild(1),data);
 			if (((String) node.jjtGetValue()).compareTo("=")== 0){
@@ -1322,7 +1333,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				if (varAss == null || expAss == null){return null;}
 				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
 			}
-			else {return null;}
+			else {setErrorType("symbole non géré"); return null;}
 		}
 		else if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
@@ -1681,7 +1692,10 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 
 	@Override
 	public Object visit(INCLUDE_SPECIFER node, Object data) {
-
+		for (String lib : uncheckedLib)
+			if (((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1).compareTo(lib) == 0)
+				return RETURN_OK;	
+		
 		//System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
 		// The destination package is either null or that specified by the
 		// visited package
