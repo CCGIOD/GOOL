@@ -1650,6 +1650,7 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		//System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
 		// The destination package is either null or that specified by the
 		// visited package
+		Object toReturn = null ;
 		List<Dependency> dependencies = new ArrayList<Dependency>();
 
 		// GoolMatcher init call
@@ -1657,9 +1658,14 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 		if (!RecognizerMatcher.matchImport(dependencyString )) {
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
+		else{
+			toReturn = RETURN_OK ;
+		}
+		
+		//RecognizerMatcher.printMatchTables();
+		stackClassActives.peek().addDependencies(dependencies);
 
-
-
+		// Construction dans l'arbre
 		for (ClassDef classDef : getGoolClasses()) {
 			GoolLibraryClassAstBuilder.init(defaultPlatform);
 			for (Dependency dep : classDef.getDependencies()) {
@@ -1670,13 +1676,9 @@ public class CppRecognizerV2 implements CPPParserVisitor, CPPParserTreeConstants
 				}
 			}
 		}
-		
-		//RecognizerMatcher.printMatchTables();
-		stackClassActives.peek().addDependencies(dependencies);
-
 		//System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
 
-		return null;
+		return toReturn;
 	}
 
 

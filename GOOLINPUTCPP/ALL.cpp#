@@ -19,6 +19,7 @@ static class B
 
 // Librairie
 // Transformer en java.io.File
+#include "un_fichier_nom_reconnue.h"
 #include "GoolFileImpl.h"
 int f(){
 	GoolFileImpl f("azerty1");
