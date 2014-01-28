@@ -81,6 +81,8 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	public final int RETURN_OK = 1;
 
+	public static final boolean OPTION_PRINT_AST = false;
+
 	// AST produit par le parser C++
 	private List<SimpleNode> AST;
 
@@ -175,8 +177,9 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 		try{
 			ast = cppr.getAST();
-			for (SimpleNode a : ast)
-				a.dump("");
+			if (OPTION_PRINT_AST)
+				for (SimpleNode a : ast)
+					a.dump("");
 		}
 		catch (Exception e){return;}
 

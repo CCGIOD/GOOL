@@ -84,7 +84,7 @@ public final class CPPParser {
 		CPPParser parser  = null;
 		java.io.InputStream input;
 		java.util.List<SimpleNode> toReturn = new java.util.ArrayList<SimpleNode>();
-		java.io.File rep = new java.io.File("GOOLINPUTCPP/");
+		java.io.File rep = new java.io.File(gool.Settings.get("cpp_in_dir"));
 		String [] listefichiers=rep.list();
 		java.util.Arrays.sort(listefichiers, new java.util.Comparator<String>() {
                     @Override public int compare(String s1, String s2) {
@@ -101,7 +101,7 @@ public final class CPPParser {
 			if(listefichiers[i].endsWith(".cpp") || listefichiers[i].endsWith(".h")){
 				String filename = listefichiers[i];
 				try {
-					input = new java.io.FileInputStream("GOOLINPUTCPP/"+filename);
+					input = new java.io.FileInputStream(gool.Settings.get("cpp_in_dir")+filename);
 					if (first){
 						parser = new CPPParser(input);
 						first=false;
