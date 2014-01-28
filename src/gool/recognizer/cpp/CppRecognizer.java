@@ -121,6 +121,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	 */
 	private List<String> uncheckedLib;
 
+	
 	/**
 	 * The function used to init the list of unchecked librairies.
 	 */

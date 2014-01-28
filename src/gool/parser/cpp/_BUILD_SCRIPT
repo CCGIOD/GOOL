@@ -9,6 +9,7 @@ cp ClassScope.java tmp
 cp Scope.java tmp
 cp SymtabManager.java tmp
 cp CPP.jjt tmp
+cp preprocessor.sh tmp
 rm -r ./nodes
 rm *.*
 cp tmp/* .
