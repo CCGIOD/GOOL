@@ -34,9 +34,7 @@ options {
 }
 
 PARSER_BEGIN(CPPParser)
-//package net.sourceforge.pmd.cpd.cppast;
-
-    package gool.parser.cpp;
+package gool.parser.cpp;
 
 public final class CPPParser {
 
