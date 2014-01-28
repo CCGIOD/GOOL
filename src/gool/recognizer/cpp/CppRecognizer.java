@@ -65,7 +65,11 @@ import gool.parser.cpp.nodes.*;
 import gool.recognizer.common.GoolLibraryClassAstBuilder;
 import gool.recognizer.common.RecognizerMatcher;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -98,6 +102,43 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	private void initUncheckedLib (){
 		this.uncheckedLib=new ArrayList<String>();
+		BufferedReader lecteurAvecBuffer = null;
+		String ligne;
+
+		try
+		{
+			lecteurAvecBuffer = new BufferedReader(new FileReader("src/gool/recognizer/cpp/IncludesIngnore.txt"));
+		}
+		catch(FileNotFoundException exc)
+		{
+			System.out.println("Erreur d'ouverture");
+		}
+		try {
+			/* On parcours le fichier et on ajoute au fur et à mesure dans uncheckedLib. */
+			while ((ligne = lecteurAvecBuffer.readLine()) != null){
+				/* On ne prend que les lignes ne commençant ni pas # ni par [:blank:] */
+				if(ligne.length() != 0){
+					if(ligne.charAt(0) != '#' 
+							&& ligne.charAt(0) != ' '
+							&& ligne.charAt(0) != '\t'
+							&& ligne.charAt(0) != '\n')
+					{
+						this.uncheckedLib.add(ligne);
+					}
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			lecteurAvecBuffer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//for (String lib : uncheckedLib)
+			//System.out.println("IncludesIngnore : [" + lib + "]");
 	}
 
 	// Langage output (fixé à JAVA pour les tests)
