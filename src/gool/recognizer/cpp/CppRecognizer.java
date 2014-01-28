@@ -72,88 +72,138 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
+/**
+ * The CppRecognizer does the work of converting abstract Cpp to abstract GOOL.
+ */
 @SuppressWarnings("unchecked")
 public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
-	public final int RETURN_OK = 1;
-
+	/**
+	 * The option to print or not the Cpp AST in the console.
+	 */
 	public static final boolean OPTION_PRINT_AST = false;
 
-	// AST produit par le parser C++
+	/**
+	 * The list of AST (one per input file) produced by the Cpp parser.
+	 */
 	private List<SimpleNode> AST;
 
-	// Collection des classes <=> AST GOOL
+	/**
+	 * The collection of GOOL classes (ie the result of the recognization).
+	 */
 	private Collection<ClassDef> goolClasses = new ArrayList<ClassDef> ();
 
-	// Getter sur L'AST GOOL
+	/**
+	 * Getter of the collection.
+	 */
 	public final Collection<ClassDef> getGoolClasses() {
 		return goolClasses;
 	}
 
+	/**
+	 * The global variable used to print the type of an error when it's possible.
+	 */
 	private String errorType = null;
 
+	/**
+	 * Setter of the errorType.
+	 */
 	private void setErrorType (String str){
 		this.errorType=str;
 	}
 
+	/**
+	 * The list of cpp librairies that we don't check (ex: iostream).
+	 */
 	private List<String> uncheckedLib;
 
+	/**
+	 * The function used to init the list of unchecked librairies.
+	 */
 	private void initUncheckedLib (){
 		this.uncheckedLib=new ArrayList<String>();
 	}
 
-	// Langage output (fixé à JAVA pour les tests)
+	/**
+	 * The default platform used to specify the Target Language, which will be
+	 * annotated in the newly created classes.
+	 */
 	private Platform defaultPlatform = JavaPlatform.getInstance();
 	//private Platform defaultPlatform = CppPlatform.getInstance();
 	//private Platform defaultPlatform = PythonPlatform.getInstance();
 
-	// Pointeurs sur la "classe active",
-	//ie la classe à laquelle les éléments qui sont en trian d'être visités appartiennent
-	//private ClassDef classActive;
+	/**
+	 * The stack of actives classes (used to know in which class insert a method or a field).
+	 */
 	private Stack<ClassDef> stackClassActives = new Stack<ClassDef>();
+
+	/**
+	 * The activ method (used to know in which method insert a statement).
+	 */
 	private Meth methActive = null;
+
+	/**
+	 * The default modifier.
+	 */
 	private Modifier accesModifierActive = Modifier.PUBLIC;
 
-	// un cache pour Savoir ce qui est importé.
+	/**
+	 * The cache to know what is imported.
+	 */
 	private Collection<String> importCache = new ArrayList<String>();
 
 
-	// Constructeur
+	/**
+	 * The constructor of CppRecognizer (call the parser).
+	 */
 	public CppRecognizer (){
 		this.AST=CPPParser.getCppAST();
+		initUncheckedLib();
 	}
 
-	// Getter sur l'ast c++
+	/**
+	 * Getter of the AST.
+	 */
 	public List<SimpleNode> getAST (){
 		return AST;
 	}
 
 
+	/**
+	 * Main method : translate from the input directory to the output directory.
+	 */
 	public static void main (String args[]){
+
+		// Init the recognizer
 		CppRecognizer cppr = new CppRecognizer();
-		cppr.initUncheckedLib();
-		List<SimpleNode> ast;
+		List<SimpleNode> ast = cppr.getAST();
 
-		try{
-			ast = cppr.getAST();
-			if (OPTION_PRINT_AST)
-				for (SimpleNode a : ast)
-					a.dump("");
-		}
-		catch (Exception e){return;}
+		// Checking the parsing and print the ASTs if the option is set on true
+		if (ast == null){return;}		
+		if (OPTION_PRINT_AST)
+			for (SimpleNode a : ast)
+				a.dump("");
 
+		// Init the recognizerMatcher (for librairies)
 		RecognizerMatcher.init("cpp");
 
+		// Start the visit from the root (TRANSLATION_UNIT)
 		for (SimpleNode a : ast)
 			cppr.visit(a, 0);
-		try {
-			GeneratorHelper.printClassDefs(cppr.getGoolClasses());
-		} catch (FileNotFoundException e) {}
+
+		// Print the collection of ClassDef
+		try {GeneratorHelper.printClassDefs(cppr.getGoolClasses());}
+		catch (FileNotFoundException e) {}
 	}
 
-	private void getUnrocognizedPart(Token begin, Token end, String prefix){
+	/**
+	 * Print an error message from the first and the last token of a part of the input code.
+	 * A prefix can be add in some case.
+	 */
+	private void getUnrecognizedPart(Token begin, Token end, String prefix){
 		String toPrint="";
 		while (!(begin.beginLine == end.beginLine && begin.beginColumn == end.beginColumn)){
+			// Uncomment the following code to print the sequence with the original indent :
 			/*toPrint+=begin.image;
 			boolean sautDeLigne=false;
 			for (int i=0;i<(begin.next.beginLine-begin.endLine);i++){
@@ -171,30 +221,46 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		}
 		toPrint+=end.image;
 		if (errorType == null)
-			System.out.println("WARNING: \" "+prefix+toPrint+" \" dans "+getLocationError()+" (ligne "+begin.beginLine+") a été ignoré car non reconnu par GOOL !");
+			System.out.println("WARNING: \" "+prefix+toPrint+" \" in "+getLocationError()+" (line "+begin.beginLine+") was ignored because not recognized by GOOL!");
 		else{ 
-			System.out.println("WARNING: \" "+prefix+toPrint+" \" dans "+getLocationError()+" (ligne "+begin.beginLine+") a été ignoré car non reconnu ("+errorType+") par GOOL !");
+			System.out.println("WARNING: \" "+prefix+toPrint+" \" in "+getLocationError()+" (line "+begin.beginLine+") was ignored because not recognized ("+errorType+") by GOOL!");
 			errorType=null;
 		}
 	}
 
-	private void getUnrocognizedPart(Token begin, Token end){
-		getUnrocognizedPart(begin, end, "");
+	/**
+	 * @see private void getUnrecognizedPart(Token begin, Token end, String prefix);
+	 * No prefix.
+	 */
+	private void getUnrecognizedPart(Token begin, Token end){
+		getUnrecognizedPart(begin, end, "");
 	}
 
-
-	private void setUnrocognizedPart(String toPrint, Token begin){
-		System.out.println("WARNING: \" "+toPrint+" \" dans "+getLocationError()+" (ligne "+begin.beginLine+") a été ignoré car non reconnu par GOOL !");
+	/**
+	 * @see private void getUnrecognizedPart(Token begin, Token end, String prefix);
+	 * No first/last token but a string instead.
+	 */
+	private void setUnrecognizedPart(String toPrint, Token begin){
+		System.out.println("WARNING: \" "+toPrint+" \" in "+getLocationError()+" (line "+begin.beginLine+") was ignored because not recognized by GOOL!");
 	}
 
+	/**
+	 * Give the current method or class. Used when an error is printed.
+	 */	
 	private String getLocationError (){
-		if (methActive != null){
-			return "la fonction "+methActive.getName();
-		}
+		if (methActive != null)
+			return "the function "+methActive.getName();
 		else
-			return "la classe "+stackClassActives.peek().getName();
+			return "the class "+stackClassActives.peek().getName();
 	}
 
+	/**
+	 * This method is used to call the visit on a specific children.
+	 * If the children is not where he is suppose to be, the method return null.
+	 * @param typeNode The type of node wanted
+	 * @param pos The position of the node wanted
+	 * @return
+	 */
 	private Object returnChild (int typeNode, SimpleNode node, int pos, Object data){
 		if (node.jjtGetNumChildren() < pos+1)
 			return null;
@@ -204,17 +270,19 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			return visit((SimpleNode) node.jjtGetChild(pos), data);
 	}
 
-	@Override
-	public Object visit(SimpleNode node, Object data) {
-		return node.jjtAccept(this, data);
-	}
-
+	/**
+	 * This method give a class name like "Class" from a string like "class.cpp".
+	 */
 	private String createClassNameFromFilename(Object o){
 		String filename = (String) o;
 		String className = filename.split("\\.")[0];		
 		return className.substring(0, 1).toUpperCase() + className.substring(1);
 	}
 
+	/**
+	 * This method allow to check if a node have a specific child in his children.
+	 * It's sometimes the only way of identifying the type of GOOL node we have to build.
+	 */
 	private boolean testChild (SimpleNode node, int n, String value){
 		if (node.jjtGetId() == n){
 			if (value == null)
@@ -228,14 +296,20 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		return toReturn;
 	}
 
+	/**
+	 * @see private boolean testChild (SimpleNode node, int n, String value);
+	 * No verification of value.
+	 */
 	private boolean testChild (SimpleNode node, int n){
 		return testChild (node,n, null);
 	}
 
+	/**
+	 * Convertion function of type : string like "int" to GOOL type like TypeInt.INSTANCE.
+	 */
 	private IType convertIType (String type){		
 		if (type == null)
 			return null;
-
 		if (type.compareTo("int") == 0){return TypeInt.INSTANCE;}
 		else if (type.compareTo("void") == 0){return TypeVoid.INSTANCE;}
 		else if (type.compareTo("char") == 0){return TypeChar.INSTANCE;}
@@ -249,6 +323,9 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		else return null;
 	}
 
+	/**
+	 * Convertion function of modifier : string like "const" to GOOL type like Modifier.FINAL.
+	 */
 	private Modifier convertModToGoolMod (String mod){
 		if (mod.compareTo("const") == 0){return Modifier.FINAL;}
 		else if (mod.compareTo("volatile") == 0){return Modifier.VOLATILE;}
@@ -257,12 +334,18 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		else if (mod.compareTo("protected") == 0){return Modifier.PROTECTED;}
 		else if (mod.compareTo("private") == 0){return Modifier.PRIVATE;}
 		else if (mod.compareTo("virtual") == 0){
+			// If abstract is detected, the class is automatically set to abstract
 			stackClassActives.peek().addModifier(Modifier.ABSTRACT);
 			return Modifier.ABSTRACT;
 		}
 		else return null;
 	}
 
+	/**
+	 * This recursive function is used to build a binary expression (ex: 1+2-3*4).
+	 * @param node The first node of the expression in the Cpp AST
+	 * @param listOpe The list of operator (ex: in 1+2-3*4, it's [+,-,*])
+	 */
 	private Expression getBinaryExpression (SimpleNode node, int i, List<?> listOpe, Object data){
 		if (listOpe == null)
 			return (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
@@ -276,6 +359,10 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		}		
 	}
 
+	/**
+	 * Convertion function of a symbol : string like "+" to GOOL type like Operator.PLUS.
+	 * NB: the GOOL operator like Operator.DECIMALPLUS are not used.
+	 */
 	private Operator convertSymToOpe (String sym){
 		if (sym.compareTo("+") == 0){return Operator.PLUS;}
 		else if (sym.compareTo("-") == 0){return Operator.MINUS;}
@@ -294,6 +381,10 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		else return Operator.UNKNOWN;
 	}
 
+	/**
+	 * This function is used to check if an expression is a print call.
+	 * The expression need to be like : cout (<< ...)+ << endl;
+	 */
 	private boolean isFunctionPrint (SimpleNode node, Object data){
 		if (node.jjtGetNumChildren() < 3)
 			return false;
@@ -311,6 +402,10 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		} catch (Exception e){return false;}
 	}
 
+	/**
+	 * This function build the expression of a print call.
+	 * The first element (cout) and the last (endl) are ignored to do this.
+	 */
 	private Expression getExpressionPrint (SimpleNode node, int i, Object data){
 		if (i == node.jjtGetNumChildren()-2)
 			return (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
@@ -320,6 +415,9 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		}
 	}
 
+	/**
+	 * This recursive function is used to build a boolean expression.
+	 */	
 	private Expression getBooleanExpression (SimpleNode node, Object data){
 		if (node.jjtGetNumChildren() == 2){
 			Operator o = convertSymToOpe((String) node.jjtGetValue());
@@ -334,12 +432,18 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		else return null;
 	}
 
-	private boolean testDeclarationTableau (SimpleNode node){
+	/**
+	 * Check if we are in the case of a declaration of an array.
+	 */
+	private boolean testDeclarationArray (SimpleNode node){
 		if (testChild(node, JJTDECLARATOR_SUFFIXES))
 			return (!testChild(node, JJTDECLARATOR_SUFFIXES,"()"));
 		return false;
 	}
 
+	/**
+	 * This function give the list of the dimension of an array.
+	 */
 	private Expression getListDim (SimpleNode node, int i, Object data){
 		if (i == 1){
 			Expression id = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
@@ -354,6 +458,9 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		}
 	}
 
+	/**
+	 * Setter of the active method. This function is used to check if the exist in the classes.
+	 */
 	private Object setMethActive (String className, String name){
 		Iterator<ClassDef> it = goolClasses.iterator();
 		while (it.hasNext()){
@@ -365,13 +472,16 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				else
 					methActive=m;
 
-				return RETURN_OK;
+				return 0;
 			}
 		}
 		return null;
 	}
 
-	private ClassDef classExist (String className){
+	/**
+	 * This function is used to test if a class already exists.
+	 */
+	private ClassDef classExists (String className){
 		Iterator<ClassDef> it = goolClasses.iterator();
 		while (it.hasNext()){
 			ClassDef tmp = it.next();
@@ -382,11 +492,21 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		return null;
 	}
 
-	/******************************************************************************************/
+	/**
+	 * The following function are the implementation of the CPPParserVisitor
+	 * interface provided by the Cpp parser.
+	 */
+
+	@Override
+	public Object visit(SimpleNode node, Object data) {
+		return node.jjtAccept(this, data);
+	}
 
 	@Override
 	public Object visit(CPPAST_TRANSLATION_UNIT node, Object data) {
-		ClassDef unitaryClass = classExist(createClassNameFromFilename(node.jjtGetValue()));
+		ClassDef unitaryClass = classExists(createClassNameFromFilename(node.jjtGetValue()));
+
+		// The class is added to goolClasses when it doesn't exist yet
 		if (unitaryClass == null){
 			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
 			goolClasses.add(unitaryClass);
@@ -400,7 +520,8 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	public Object visit(CPPAST_EXTERNAL_DECLARATION node, Object data) {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			if (node.jjtGetChild(i).jjtAccept(this, data) == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				// If an external declaration is not correctely recognized, an error is printed
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 		}		
 		return null;
 	}
@@ -408,22 +529,26 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	@Override
 	public Object visit(CPPAST_FUNCTION_DEFINITION node, Object data) {
 		String className = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_SCOPE");
+
+		// If the function definition is prefixed by <ClassName>:: , the active method is change
 		if (className != null){
 			String name = (String) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_NAME");
 			if (name == null){return null;}
 			if (setMethActive(className.replaceAll("::", ""),name) == null){return null;}
 			visit((CPPAST_FUNC_DECL_DEF) node.jjtGetChild(2), data);
 			methActive=null;
-			return RETURN_OK;
+			return 0;
 		}
 
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, "GET_TYPE");
 		if (type == null){return null;}
+
+		// Test of '*' (only char* is allowed)
 		if (node.jjtGetChild(1).jjtGetChild(0).jjtGetId()==JJTPTR_OPERATOR && node.jjtGetChild(1).jjtGetChild(0).jjtGetValue() != null){
 			if (type.equals(TypeChar.INSTANCE))
 				type=TypeString.INSTANCE;
 			else{
-				setErrorType("pointeur");
+				setErrorType("pointer");
 				return null;
 			}
 		}
@@ -441,6 +566,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		}
 		if (listVD == null){listVD=new ArrayList<VarDeclaration>();}
 
+		// Checking if it's the main method or not
 		if (name.compareTo("main") == 0 && type == TypeInt.INSTANCE && ((listVD.size() == 2 
 				&& listVD.get(0).getType() == TypeInt.INSTANCE && listVD.get(1).getType() == TypeString.INSTANCE) || (listVD.size() == 0))){ 
 			m = new MainMeth();
@@ -450,6 +576,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			for (VarDeclaration vd : listVD)
 				m.addParameter(vd);
 
+			// Throw are set in GOOL but not generated in java output
 			if (testChild(node, JJTEXCEPTION_SPEC)){
 				List<IType> lt = (List<IType>) returnChild(JJTFUNCTION_DECLARATOR, node, 1, "GET_EXCEP");
 				if (lt != null)
@@ -464,7 +591,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		methActive=m;
 		visit((CPPAST_FUNC_DECL_DEF) node.jjtGetChild(2), data);
 		methActive=null;
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
@@ -475,7 +602,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			if (blockToAdd != null)
 				methActive.addStatement(blockToAdd);
 		}
-		return RETURN_OK;			
+		return 0;			
 	}
 
 	@Override
@@ -485,13 +612,15 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	@Override
 	public Object visit(CPPAST_DECLARATION node, Object data) {
+		// Test of unimplemented part of the parser
 		if (testChild(node, JJTSTORAGE_CLASS_SPECIFIER,"UNKNOW"))
 			return null;
 
-		// Cas d'une déclaration de classe
+		// Case of a class declaration
 		if (testChild(node, JJTCLASS_SPECIFIER))	
 			return returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
-		// Cas d'une déclaration de variable
+
+		// Case of a varaible declaration
 		else if (testChild(node, JJTDECLARATION_SPECIFIERS) && testChild(node, JJTINIT_DECLARATOR_LIST)){
 			Block blockToReturn = new Block();
 			boolean printErrorDef=false;
@@ -502,7 +631,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				if (type.equals(TypeChar.INSTANCE))
 					type=TypeString.INSTANCE;
 				else{
-					setErrorType("pointeur");
+					setErrorType("pointer");
 					return null;
 				}
 			}
@@ -510,11 +639,12 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			Collection <Modifier> cm = (Collection <Modifier>) visit((CPPAST_DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 			if (cm == null || cm.contains(Modifier.ABSTRACT)){cm = new ArrayList<Modifier>();}
 
-			SimpleNode nodeDecList = (SimpleNode) node.jjtGetChild(1); // <- INIT_DECLARATOR_LIST
+			SimpleNode nodeDecList = (SimpleNode) node.jjtGetChild(1);
 			for(int i=0;i<nodeDecList.jjtGetNumChildren();i++){
 				String name = (String) returnChild(JJTINIT_DECLARATOR, nodeDecList, i, "GET_NAME");						
 				if (name == null){return null;}
 
+				// Looking for an initializer
 				Expression def = null;
 				if (nodeDecList.jjtGetChild(i).jjtGetNumChildren() > 1 && nodeDecList.jjtGetChild(i).jjtGetChild(1).jjtGetId() == JJTINITIALIZER){
 					def = (Expression) visit((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1), data);
@@ -523,7 +653,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				}
 
 				IType saveType = type;
-				if (testDeclarationTableau((SimpleNode) nodeDecList.jjtGetChild(i))){
+				if (testDeclarationArray((SimpleNode) nodeDecList.jjtGetChild(i))){
 					int dim = (Integer) visit((SimpleNode) nodeDecList.jjtGetChild(i),"GET_DIM");
 
 					for (int j=0;j<dim;j++){
@@ -531,17 +661,18 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 					}					
 					List<Expression> le = (List<Expression>) visit((SimpleNode) nodeDecList.jjtGetChild(i),"GET_DIM_VAL");
 					if (le.size() > 0){
-						if (dim > 1){setErrorType("init. avec dimension > 1 non gérée"); return null;} // Maximum un dimension sinon problème de génération de code ...
+						if (dim > 1){setErrorType("init. with dimension > 1 impossible"); return null;} // Maximum un dimension sinon problème de génération de code ...
 						def=new ArrayNew(saveType, le, le);				
 					}					
 				}				
 
-				// Déclaration des attributs de la classe
+				// Declaration of field
 				if (node.jjtGetParent().jjtGetId() == JJTEXTERNAL_DECLARATION){
 					cm.add(Modifier.PRIVATE);
 					stackClassActives.peek().addField(new Field(cm, name, type, def));
-				}			
-				// Initialisation avec constructeur non vide : Test t(1);
+				}	
+
+				// Initialisation with a constructor with parameter(s) like MyClass mc(1);
 				else if (nodeDecList.jjtGetChild(i).jjtGetNumChildren() > 1 && nodeDecList.jjtGetChild(i).jjtGetChild(1).jjtGetId() == JJTEXPRESSION_LIST){					
 					if (testChild(nodeDecList, JJTINITIALIZER))
 						return null;
@@ -554,7 +685,8 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 						ni.addParameter(e);
 					blockToReturn.addStatement(ni);
 				}
-				// Initialisation avec constructeur vide : Test t() ou Test t = new Test (...);
+
+				// Initialisation with a constructeur without parameter like Test t() or with a new call like Test t = new Test (...);
 				else if (type instanceof TypeClass){
 					if (testChild(nodeDecList, JJTINITIALIZER))
 						return null;
@@ -568,7 +700,8 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 							ni.addParameters(((ClassNew) def).getParameters());
 					blockToReturn.addStatement(ni);
 				}
-				// Initialisation simple : int i; ou int i=1;
+
+				// Simple initialisation like int i; ou int i=1;
 				else{
 					VarDeclaration vd = new VarDeclaration(type, name);
 					vd.setInitialValue(def);					
@@ -578,7 +711,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 				type=saveType;
 				if (printErrorDef){
-					getUnrocognizedPart(((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetLastToken(),"= ");
+					getUnrecognizedPart(((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetFirstToken(), ((SimpleNode) nodeDecList.jjtGetChild(i).jjtGetChild(1)).jjtGetLastToken(),"= ");
 					printErrorDef=false;
 				}
 			}
@@ -596,7 +729,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		else if (node.jjtGetNumChildren() != 0)
 			return node.jjtGetChild(0).jjtAccept(this, data);
 		else{
-			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+			getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 			return null;
 		}
 	}
@@ -608,7 +741,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			for (int i=0;node.jjtGetChild(i).jjtGetId() == JJTTYPE_MODIFIERS;i++){
 				Modifier m = (Modifier) visit((SimpleNode) node.jjtGetChild(i), data);
 				if (m == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+					getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 				else
 					toReturn.add(m);
 			}
@@ -663,7 +796,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		String cppClass = node.jjtGetChild(0).jjtGetValue().toString();
 		String goolClass = RecognizerMatcher.matchClass(cppClass);
 		if (goolClass != null) {
-			// Si on remarque une librairie alors on ajoute la dépendence
+			// If there is a librairy, a dependency is added
 			if(!importCache.contains(goolClass)){
 				stackClassActives.peek().addDependency(new RecognizedDependency(goolClass));
 				importCache.add(goolClass);
@@ -715,11 +848,11 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	@Override
 	public Object visit(CPPAST_CLASS_SPECIFIER node, Object data) {
 		if (node.jjtGetValue() == null){
-			setErrorType("structure non gérée"); 
+			setErrorType("struct/union impossible"); 
 			return null;
 		}
 
-		ClassDef cd = classExist(node.jjtGetValue().toString());
+		ClassDef cd = classExists(node.jjtGetValue().toString());
 
 		if (cd == null){
 			cd = new ClassDef(Modifier.PUBLIC, node.jjtGetValue().toString(), defaultPlatform);
@@ -729,18 +862,18 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 			stackClassActives.push(cd);
 			if (testChild(node, JJTBASE_CLAUSE)){
-				if (returnChild(JJTBASE_CLAUSE, node, 0, data) == null){setErrorType("héritage"); return null;}
+				if (returnChild(JJTBASE_CLAUSE, node, 0, data) == null){setErrorType("inheritance"); return null;}
 			}
 			goolClasses.add(cd);
 			node.childrenAccept(this, data);
 			stackClassActives.pop();
-			return RETURN_OK;
+			return 0;
 		}
 		else {
 			stackClassActives.push(cd);
 			node.childrenAccept(this, data);
 			stackClassActives.pop();
-			return RETURN_OK;
+			return 0;
 		}
 	}
 
@@ -749,7 +882,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		if (node.jjtGetNumChildren() == 1){
 			String name = ((SimpleNode) node.jjtGetChild(0)).jjtGetValue().toString();
 			stackClassActives.peek().setParentClass(new TypeClass(name));
-			return RETURN_OK;
+			return 0;
 		}
 		else{
 			return null;
@@ -784,12 +917,12 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				if (type.equals(TypeChar.INSTANCE))
 					type=TypeString.INSTANCE;
 				else{
-					setErrorType("pointeur");
+					setErrorType("pointer");
 					return null;
 				}
 			}
 
-			SimpleNode nodeDecList = (SimpleNode) node.jjtGetChild(1); // <- MEMBER_DECLARATOR_LIST
+			SimpleNode nodeDecList = (SimpleNode) node.jjtGetChild(1);
 
 			for (int i=0;i<nodeDecList.jjtGetNumChildren();i++){
 				String name = (String) returnChild(JJTDECLARATOR, (SimpleNode) nodeDecList.jjtGetChild(i), 0, "GET_NAME");						
@@ -803,17 +936,17 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			if (visit((SimpleNode) node.jjtGetChild(0),data) == null){return null;}
 		}
 		else {
-			getUnrocognizedPart(((SimpleNode) node).jjtGetFirstToken(), ((SimpleNode) node).jjtGetLastToken());
+			getUnrecognizedPart(((SimpleNode) node).jjtGetFirstToken(), ((SimpleNode) node).jjtGetLastToken());
 			return null;
 		}
-		return RETURN_OK;
+		return 0;
 
 	}
 
 	@Override
 	public Object visit(CPPAST_MEMBER_DECLARATOR_LIST node, Object data) {
 		node.childrenAccept(this, data);
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
@@ -835,16 +968,16 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		goolClasses.add(cd);
 		node.childrenAccept(this, node.jjtGetValue());
 		stackClassActives.pop();
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
 	public Object visit(CPPAST_ENUMERATOR_LIST node, Object data) {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			if (visit((SimpleNode) node.jjtGetChild(i), data) == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 		}
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
@@ -853,7 +986,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		f.addModifier(Modifier.STATIC);
 		f.addModifier(Modifier.FINAL);
 		stackClassActives.peek().addField(f);
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
@@ -949,7 +1082,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		methActive=c;
 		visit((CPPAST_COMPOUND_STATEMENT) node.jjtGetChild(2), data);
 		methActive=null;
-		return RETURN_OK;
+		return 0;
 	}
 
 	@Override
@@ -994,11 +1127,11 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	@Override
 	public Object visit(CPPAST_PARAMETER_LIST node, Object data) {
 		if (node.jjtGetNumChildren() == 0)
-			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+			getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 		else {
 			Object toReturn = returnChild(JJTPARAMETER_DECLARATION_LIST, node, 0, data);				
 			if (node.jjtGetValue() != null)
-				setUnrocognizedPart(", ...",node.jjtGetFirstToken());
+				setUnrecognizedPart(", ...",node.jjtGetFirstToken());
 			return toReturn;
 		}
 		return null;
@@ -1019,28 +1152,28 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	public Object visit(CPPAST_PARAMETER_DECLARATION node, Object data) {
 		IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
 		if (type == null){
-			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+			getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 			return null;
 		}
 		if (testChild(node, JJTPTR_OPERATOR,"*")){
 			if (type.equals(TypeChar.INSTANCE))
 				type=TypeString.INSTANCE;
 			else{
-				setErrorType("pointeur");
-				getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+				setErrorType("pointer");
+				getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 				return null;
 			}
 		}
 		String name = (String) returnChild(JJTDECLARATOR, node, 1, "GET_NAME");						
 		if (name == null){
-			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+			getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 			return null;
 		}
 
 		Collection <Modifier> cm = (Collection <Modifier>) visit((CPPAST_DECLARATION_SPECIFIERS) node.jjtGetChild(0), "GET_MODIFIERS");
 		if (cm == null){
 			setErrorType("modifiers");
-			getUnrocognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
+			getUnrecognizedPart(node.jjtGetFirstToken(), node.jjtGetLastToken());
 			return null;
 		}
 
@@ -1061,8 +1194,8 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		if(node.jjtGetChild(1) != null && node.jjtGetChild(1).jjtGetValue() != null && node.jjtGetChild(1).jjtGetValue().toString().compareTo("[]")==0){
 			if (node.jjtGetChild(1).jjtGetNumChildren() > 0){
 				IType type = (IType) returnChild(JJTDECLARATION_SPECIFIERS, node, 0, data);
-				setErrorType("pas d'init. dans un cast en tableau");
-				getUnrocognizedPart(((SimpleNode)node.jjtGetChild(1).jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1).jjtGetChild(0)).jjtGetLastToken());
+				setErrorType("no init. in a array cast");
+				getUnrecognizedPart(((SimpleNode)node.jjtGetChild(1).jjtGetChild(0)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(1).jjtGetChild(0)).jjtGetLastToken());
 				return new TypeArray(type);
 			}
 			else{
@@ -1119,7 +1252,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			Statement s = (Statement) visit((SimpleNode) node.jjtGetChild(i) , data);
 			if (s == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 			else
 				b.addStatement(s);
 		}
@@ -1201,7 +1334,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			if (node.jjtGetValue().toString().split(" ").length == 1){
 				Statement stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
+					getUnrecognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
 				return new For(null,null,null,stFor);
 			}
 			else {				
@@ -1216,28 +1349,28 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 						initFor = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
 						if (initFor instanceof Block){
 							if (((Block) initFor).getStatements().size() > 1){
-								setErrorType("multiples déclarations dans un for");
+								setErrorType("no more than 1 declaration in a for");
 								return null;
 							}
 							initFor=((Block) initFor).getStatements().get(0); 
 						}
 						if (initFor == null)
-							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+							getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 					}
 					else if (pattern.charAt(i) == '2'){
 						condFor = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
 						if (condFor == null)
-							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+							getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 					}
 					else{
 						updater = (Statement) visit((SimpleNode) node.jjtGetChild(i),data);
 						if (updater == null)
-							getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+							getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 					}
 				}
 				stFor = (Statement) visit((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1),data);
 				if (stFor == null)
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
+					getUnrecognizedPart(((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(node.jjtGetNumChildren()-1)).jjtGetLastToken());
 
 				return new For(initFor,condFor,updater,stFor);
 			}
@@ -1278,7 +1411,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			else{
 				Catch c = (Catch) visit((SimpleNode) node.jjtGetChild(i),data);
 				if (c == null){
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+					getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 				}
 				else
 					catches.add(c);
@@ -1356,7 +1489,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				if (varAss == null || expAss == null){return null;}
 				return new CompoundAssign(varAss, expAss, operator, textualoperator, TypeInt.INSTANCE);
 			}
-			else {setErrorType("symbole non géré"); return null;}
+			else {setErrorType("unrecognized symbol"); return null;}
 		}
 		else if (node.jjtGetNumChildren() == 1)
 			return visit((SimpleNode) node.jjtGetChild(0), data);
@@ -1460,7 +1593,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				if (type.equals(TypeChar.INSTANCE))
 					type=TypeString.INSTANCE;
 				else{
-					setErrorType("pointeur");
+					setErrorType("pointer");
 					return null;
 				}
 			}				
@@ -1524,7 +1657,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		if (testChild(node,JJTDIRECT_NEW_DECLARATOR)){
 			List <Expression> listExpr = (List <Expression>) visit((SimpleNode) node.jjtGetChild(0).jjtGetChild(1).jjtGetChild(0),data);
 			if (listExpr == null){return null;}
-			else if (listExpr.size() > 1){setErrorType("dimension > 1 non gérée"); return null;}
+			else if (listExpr.size() > 1){setErrorType("dimension > 1 impossible"); return null;}
 			return new ArrayNew(type,listExpr,listExpr);
 		}
 
@@ -1553,7 +1686,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			Expression e = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
 			if (e == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 			else
 				listExp.add(e);
 		}
@@ -1682,7 +1815,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			Expression e = (Expression) visit((SimpleNode) node.jjtGetChild(i),data);
 			if (e == null)
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 			else
 				listExp.add(e);
 		}
@@ -1715,14 +1848,14 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		for (int i=0;i<node.jjtGetNumChildren();i++){
 			IType type = (IType) returnChild(JJTTYPE_NAME, node, 0, data);
 			if (type == null){
-				getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+				getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 			}
 			else if (testChild(node, JJTPTR_OPERATOR,"*")){
 				if (type.equals(TypeChar.INSTANCE))
 					type=TypeString.INSTANCE;
 				else{
-					setErrorType("pointeur");
-					getUnrocognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
+					setErrorType("pointer");
+					getUnrecognizedPart(((SimpleNode) node.jjtGetChild(i)).jjtGetFirstToken(), ((SimpleNode) node.jjtGetChild(i)).jjtGetLastToken());
 				}
 			}
 			else
@@ -1735,11 +1868,9 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	public Object visit(CPPAST_INCLUDE_SPECIFER node, Object data) {
 		for (String lib : uncheckedLib)
 			if (((String)node.jjtGetValue()).substring(1,((String)node.jjtGetValue()).length()-1).compareTo(lib) == 0)
-				return RETURN_OK;	
+				return 0;	
 
-		//System.out.println("[CppRecognizer] BEGIN of visitINCLUDE_SPECIFER.");
-		// The destination package is either null or that specified by the
-		// visited package
+		// The destination package is either null or that specified by the visited package
 		Object toReturn = null ;
 		List<Dependency> dependencies = new ArrayList<Dependency>();
 
@@ -1749,13 +1880,13 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			dependencies.add(new UnrecognizedDependency(dependencyString));
 		}
 		else{
-			toReturn = RETURN_OK ;
+			toReturn = 0 ;
 		}
 
 		//RecognizerMatcher.printMatchTables();
 		stackClassActives.peek().addDependencies(dependencies);
 
-		// Construction dans l'arbre
+		// Building in the tree
 		for (ClassDef classDef : getGoolClasses()) {
 			GoolLibraryClassAstBuilder.init(defaultPlatform);
 			for (Dependency dep : classDef.getDependencies()) {
@@ -1766,10 +1897,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 				}
 			}
 		}
-		//System.out.println("[CppRecognizer] END of visitINCLUDE_SPECIFER.");
 
 		return toReturn;
 	}
-
-
 }
