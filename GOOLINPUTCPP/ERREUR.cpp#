@@ -20,3 +20,14 @@ struct MaStruct
 };
 
 int i= (double [5])k;
+
+/*range-based-for loops are not allowed in C++98 mode*/
+int main()
+{
+  int myint[] = {1,2,3,4,5};
+ 
+  for (int &i: myint)
+  {
+    std::cout << i << std::endl;
+  }
+}
