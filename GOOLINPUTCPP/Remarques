@@ -1,0 +1,5 @@
+- affichage texte + variable + texte -> probleme
+- cas de main avec return statement non traiter int main{ .... ; return 0;} 
+le return doit disparaitre en java par exemple
+- b==1 not working correctly b.equals() en java
+- for each loop not accpeted in C++ 98
