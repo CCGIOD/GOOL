@@ -272,7 +272,7 @@ public abstract class CodePrinter {
 		Log.i(String.format("Writing to file %s", classFile));
 		PrintWriter writer = new PrintWriter(classFile);
 		writer.println(code);
-		System.out.println(code);
+		//System.out.println(code);
 		writer.close();
 		// Remember that you did the generation for this one abstract GOOL class
 		printedClasses.add(pclass);

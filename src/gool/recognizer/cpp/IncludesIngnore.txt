@@ -1,0 +1,10 @@
+# Fichier des includes ignorés.
+# Utilisé pour la génération d'erreur ou de warning.
+	
+ 
+
+# iostream
+iostream
+
+# math.h
+math.h

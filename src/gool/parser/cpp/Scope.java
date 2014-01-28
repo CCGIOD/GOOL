@@ -16,7 +16,7 @@ public class Scope {
     /**
      * (partial) table of type symbols introduced in this scope.
      */
-    Hashtable typeTable = new Hashtable();
+    Hashtable<String, Object> typeTable = new Hashtable<String, Object>();
 
     /**
      * Parent scope. (null if it is the global scope).
