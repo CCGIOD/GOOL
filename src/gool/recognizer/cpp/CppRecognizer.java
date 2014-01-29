@@ -541,10 +541,6 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			goolClasses.add(unitaryClass);
 		}
 
-		Object o1 = new Token();
-		Object o2 = new ArrayList<String> ();
-		o1=(Integer) o2;
-
 		stackClassActives.push(unitaryClass);
 		node.childrenAccept(this, data);
 		return null;
