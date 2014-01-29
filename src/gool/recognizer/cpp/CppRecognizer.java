@@ -121,7 +121,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	 */
 	private List<String> uncheckedLib;
 
-	
+
 	/**
 	 * The function used to init the list of unchecked librairies.
 	 */
@@ -130,40 +130,21 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		BufferedReader lecteurAvecBuffer = null;
 		String ligne;
 
-		try
-		{
+		try{
 			lecteurAvecBuffer = new BufferedReader(new FileReader("src/gool/recognizer/cpp/IncludesIngnore.txt"));
 		}
-		catch(FileNotFoundException exc)
-		{
-			System.out.println("Erreur d'ouverture");
-		}
+		catch(FileNotFoundException exc){ System.out.println("Opening error of IncludesIngnore.txt"); }
 		try {
-			/* On parcours le fichier et on ajoute au fur et à mesure dans uncheckedLib. */
 			while ((ligne = lecteurAvecBuffer.readLine()) != null){
-				/* On ne prend que les lignes ne commençant ni pas # ni par [:blank:] */
+				// The line starting with # or [:blank:] are ignored
 				if(ligne.length() != 0){
-					if(ligne.charAt(0) != '#' 
-							&& ligne.charAt(0) != ' '
-							&& ligne.charAt(0) != '\t'
-							&& ligne.charAt(0) != '\n')
-					{
+					if(ligne.charAt(0) != '#' && ligne.charAt(0) != ' '	&& ligne.charAt(0) != '\t' && ligne.charAt(0) != '\n'){
 						this.uncheckedLib.add(ligne);
 					}
 				}
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			lecteurAvecBuffer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//for (String lib : uncheckedLib)
-			//System.out.println("IncludesIngnore : [" + lib + "]");
+		} catch (Exception e) {}
+		try { lecteurAvecBuffer.close(); } catch (Exception e) {}
 	}
 
 	/**
@@ -230,8 +211,14 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		RecognizerMatcher.init("cpp");
 
 		// Start the visit from the root (TRANSLATION_UNIT)
-		for (SimpleNode a : ast)
-			cppr.visit(a, 0);
+		try {
+			for (SimpleNode a : ast)
+				cppr.visit(a, 0);
+		}
+		catch (Exception e) {
+			System.out.println("FATAL ERROR: untreated error!");
+			return;
+		}
 
 		// Print the collection of ClassDef
 		try {GeneratorHelper.printClassDefs(cppr.getGoolClasses());}
@@ -553,6 +540,11 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 			unitaryClass = new ClassDef(Modifier.PUBLIC, createClassNameFromFilename(node.jjtGetValue()), defaultPlatform);
 			goolClasses.add(unitaryClass);
 		}
+
+		Object o1 = new Token();
+		Object o2 = new ArrayList<String> ();
+		o1=(Integer) o2;
+
 		stackClassActives.push(unitaryClass);
 		node.childrenAccept(this, data);
 		return null;
