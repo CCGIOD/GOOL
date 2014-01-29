@@ -35,55 +35,104 @@ options {
 
 PARSER_BEGIN(CPPParser)
 package gool.parser.cpp;
+import java.io.File;
+import java.io.IOException;
 
 public final class CPPParser {
 
-    private static String vers = "0.1";
-    private static String id = "C++ Parser";
-  
-    private static void msg(String s) {
-	System.out.println(id + " Version " + vers +": " + s);
+
+ /**
+   * To delete a folder.
+   */
+   private static void supprRep(File r) {
+    if(r.exists()){
+     if(r.isDirectory()){
+      suppr(r);
+     }
+     r.delete();
     }
+   }
 
-    public static void main(String args[]) {
-	CPPParser parser;
-	java.io.InputStream input;
-
-	int ai = 0;
-
-	if (ai == (args.length-1)) {
-	    msg("Reading from file " + args[ai] + " . . .");
-	    try {
-		input = new java.io.FileInputStream(args[ai]);
-	    } catch (java.io.FileNotFoundException e) {
-		msg("File " + args[0] + " not found.");
-		return;
-	    }
-	} else if (ai >= args.length) {
-	    msg("Reading from standard input . . .");
-	    input = System.in;
-	} else {
-	    msg("Usage: java " + id + " [-d] [inputfile]");
-	    return;
-	}
-
-	try {
-	    parser = new CPPParser(input);
-	    SimpleNode root = parser.translation_unit();
-	    root.dump("");
-	    parser.translation_unit();
-	    msg("Program parsed successfully.");
-	} catch (ParseException e) {
-	    msg("Encountered errors during parse.");
-	}
+   private static void suppr(File r){
+    File [] fileList = r.listFiles();
+    for(int i = 0;i<fileList.length;i++){
+      if(fileList[i].isDirectory() ){
+       suppr(fileList[i]);
+       fileList[i].delete();
+      }else{
+       fileList[i].delete();
+      }
+     }
     }
-
     public static java.util.List<SimpleNode> getCppAST (){
 	CPPParser parser  = null;
 	java.io.InputStream input;
 	java.util.List<SimpleNode> toReturn = new java.util.ArrayList<SimpleNode>();
-	java.io.File rep = new java.io.File(gool.Settings.get("cpp_in_dir"));
-	String [] listefichiers=rep.list();
+	
+	String name_folder_tmp=gool.Settings.get("cpp_in_dir_tmp");
+    java.io.File rep=new java.io.File(name_folder_tmp);
+    supprRep(rep);
+    if(!rep.exists()){
+     rep.mkdirs();
+    }
+    String name_folder = gool.Settings.get("cpp_in_dir");
+    java.io.File rep_in = new java.io.File(name_folder);
+    String [] listefichiers_in=rep_in.list();
+    for(int i=0;i<listefichiers_in.length;i++){
+                        if(listefichiers_in[i].endsWith(".cpp") || listefichiers_in[i].endsWith(".h")){
+                                String filename = listefichiers_in[i];
+                                try {
+                                        Runtime runtime = Runtime.getRuntime();
+                                        Process process = runtime.exec("./src/gool/parser/cpp/preprocessor.sh "
+                                                        + name_folder + filename + " "
+                                                        + name_folder + filename +".i "
+                                                        + name_folder_tmp + filename
+                                                        + " && sync");
+                                        //Attendre la fin de l'execution
+                                        try {
+                                                if (process.waitFor() != 0) {
+                                                        System.out.println("Une erreur est survenue ");
+                                                }
+                                        } catch (InterruptedException e) {
+                                                // TODO Auto-generated catch block
+                                                e.printStackTrace();
+                                        }
+                                } catch (IOException e) {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                }
+                        }
+                }
+
+                /**
+                 * Attente que les fichiers soient bien présents
+                 */
+                /*long sleep_timer = 1000 ;
+                  boolean ends = false ;
+                  while(!ends){
+                    if(rep.list().length == nb_file_in){
+                  // Tous les fichiers sont présent
+                  ends = true ;
+                  }
+                   else{
+                 // On attend
+                    try {
+                                        Thread.sleep(sleep_timer);
+                                } catch (InterruptedException e) {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                }
+                       }
+                    }
+                    try {
+                         Thread.sleep(sleep_timer*nb_file_in);
+                } catch (InterruptedException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                }
+                 */
+
+                String [] listefichiers=rep.list();
 	java.util.Arrays.sort(listefichiers, new java.util.Comparator<String>() {
 		@Override public int compare(String s1, String s2) {
 		    if (s1.compareTo(s2) == 0)
