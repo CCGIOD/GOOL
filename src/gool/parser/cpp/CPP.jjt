@@ -35,8 +35,10 @@ options {
 
 PARSER_BEGIN(CPPParser)
 package gool.parser.cpp;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public final class CPPParser {
 
@@ -78,6 +80,7 @@ public final class CPPParser {
     String name_folder = gool.Settings.get("cpp_in_dir");
     java.io.File rep_in = new java.io.File(name_folder);
     String [] listefichiers_in=rep_in.list();
+    boolean end_with_error = false ;
     for(int i=0;i<listefichiers_in.length;i++){
                         if(listefichiers_in[i].endsWith(".cpp") || listefichiers_in[i].endsWith(".h")){
                                 String filename = listefichiers_in[i];
@@ -88,6 +91,23 @@ public final class CPPParser {
                                                         + name_folder + filename +".i "
                                                         + name_folder_tmp + filename
                                                         + " && sync");
+                                         // Affichage des erreurs
+                                         try {
+                                			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                                			String line = "";
+                                			try {
+                                				while((line = reader.readLine()) != null) {
+                                					// Traitement du flux d'erreur de l'application si besoin est
+                                					System.out.println("[Preprocessor] : " + line);
+                                					end_with_error = true ;
+                                				}
+                                			} finally {
+                                				reader.close();
+                                			}
+                                		} catch(IOException ioe) {
+                                			ioe.printStackTrace();
+                                		}
+                                                        
                                         //Attendre la fin de l'execution
                                         try {
                                                 if (process.waitFor() != 0) {
@@ -103,6 +123,9 @@ public final class CPPParser {
                                 }
                         }
                 }
+    
+    			if( end_with_error)
+    				System.exit(-1);
 
                 /**
                  * Attente que les fichiers soient bien présents
