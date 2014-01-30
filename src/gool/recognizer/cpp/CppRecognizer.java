@@ -83,7 +83,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	/**
 	 * The option to print or not the Cpp AST in the console.
 	 */
-	public static final boolean OPTION_PRINT_AST = false;
+	public static final boolean OPTION_PRINT_AST = true;
 
 	/**
 	 * The list of AST (one per input file) produced by the Cpp parser.
