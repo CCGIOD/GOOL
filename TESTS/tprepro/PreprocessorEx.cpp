@@ -10,7 +10,7 @@ void PreprocessorEx::usage(){
   cout << "usage()" << endl;
 }
 
-int main(void)
+int main()
 {
   usage();
 #ifdef WANT_FIRST_SOLUTION

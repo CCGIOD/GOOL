@@ -12,7 +12,7 @@
 
 class GoolFileImpl  {
 
-		public: 	~GoolFileImpl(char* name);
+		public: 	~GoolFileImpl(char* name){}
 
 		public: 	bool createNewFile();
 

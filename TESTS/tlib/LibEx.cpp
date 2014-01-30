@@ -2,7 +2,7 @@
 #include "GoolFileImpl.h"
 
 
-int main(void)
+int main()
 {
   GoolFileImpl myfile1("mon_path1");
   GoolFileImpl myfile2("mon_path2");

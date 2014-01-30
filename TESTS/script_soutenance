@@ -10,7 +10,7 @@ if [[ -n $1 ]]
 
 else
 
-nbt=4
+nbt=5
 
 for ((i=1 ; $i <= $nbt ; i++)) do
     rm -f -r ../GOOLINPUTCPP/*
@@ -33,5 +33,18 @@ done
     cp terreur/* ../GOOLINPUTCPP/
     echo "terreur chargé :"
     cat terreur/*
+
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp tprepro/* ../GOOLINPUTCPP/
+    echo "tprepro chargé :"
+    cat tprepro/*
+    read
+
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp tlib/* ../GOOLINPUTCPP/
+    echo "tlib chargé :"
+    cat tlib/*
 
 fi
