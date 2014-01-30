@@ -88,49 +88,19 @@ public final class CPPParser {
                                                         + name_folder + filename +".i "
                                                         + name_folder_tmp + filename
                                                         + " && sync");
-                                        //Attendre la fin de l'execution
+                                        // Wait the end of the execution
                                         try {
                                                 if (process.waitFor() != 0) {
-                                                        System.out.println("Une erreur est survenue ");
+                                                        System.out.println("Fatal error in the preprocess!");
                                                 }
                                         } catch (InterruptedException e) {
-                                                // TODO Auto-generated catch block
                                                 e.printStackTrace();
                                         }
                                 } catch (IOException e) {
-                                        // TODO Auto-generated catch block
                                         e.printStackTrace();
                                 }
                         }
                 }
-
-                /**
-                 * Attente que les fichiers soient bien présents
-                 */
-                /*long sleep_timer = 1000 ;
-                  boolean ends = false ;
-                  while(!ends){
-                    if(rep.list().length == nb_file_in){
-                  // Tous les fichiers sont présent
-                  ends = true ;
-                  }
-                   else{
-                 // On attend
-                    try {
-                                        Thread.sleep(sleep_timer);
-                                } catch (InterruptedException e) {
-                                        // TODO Auto-generated catch block
-                                        e.printStackTrace();
-                                }
-                       }
-                    }
-                    try {
-                         Thread.sleep(sleep_timer*nb_file_in);
-                } catch (InterruptedException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                }
-                 */
 
     String [] listefichiers=rep.list();
 	java.util.Arrays.sort(listefichiers, new java.util.Comparator<String>() {
