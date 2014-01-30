@@ -83,7 +83,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 	/**
 	 * The option to print or not the Cpp AST in the console.
 	 */
-	public static final boolean OPTION_PRINT_AST = true;
+	public static final boolean OPTION_PRINT_AST = false;
 
 	/**
 	 * The list of AST (one per input file) produced by the Cpp parser.
@@ -127,7 +127,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		this.uncheckedLib=new ArrayList<String>();
 		BufferedReader lecteurAvecBuffer = null;
 		String ligne;
-
+		
 		try{
 			lecteurAvecBuffer = new BufferedReader(new FileReader("src/gool/recognizer/cpp/IncludesIngnore.txt"));
 		}
@@ -1416,6 +1416,10 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	@Override
 	public Object visit(CPPAST_JUMP_STATEMENT node, Object data) {
+		if (node.jjtGetValue() != null && methActive instanceof MainMeth && defaultPlatform == JavaPlatform.getInstance()){
+			setErrorType("return in the main function");
+			return null;
+		}
 		if (node.jjtGetValue() != null){
 			Expression tr = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (tr == null){return null;}
