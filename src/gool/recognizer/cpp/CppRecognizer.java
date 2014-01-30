@@ -66,10 +66,8 @@ import gool.recognizer.common.GoolLibraryClassAstBuilder;
 import gool.recognizer.common.RecognizerMatcher;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -129,7 +127,7 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 		this.uncheckedLib=new ArrayList<String>();
 		BufferedReader lecteurAvecBuffer = null;
 		String ligne;
-
+		
 		try{
 			lecteurAvecBuffer = new BufferedReader(new FileReader("src/gool/recognizer/cpp/IncludesIngnore.txt"));
 		}
@@ -1418,6 +1416,10 @@ public class CppRecognizer implements CPPParserVisitor, CPPParserTreeConstants {
 
 	@Override
 	public Object visit(CPPAST_JUMP_STATEMENT node, Object data) {
+		if (node.jjtGetValue() != null && methActive instanceof MainMeth && defaultPlatform == JavaPlatform.getInstance()){
+			setErrorType("return in the main function");
+			return null;
+		}
 		if (node.jjtGetValue() != null){
 			Expression tr = (Expression) visit((SimpleNode) node.jjtGetChild(0),data);
 			if (tr == null){return null;}

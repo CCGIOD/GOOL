@@ -1,7 +1,5 @@
-# Fichier des includes ignorés.
-# Utilisé pour la génération d'erreur ou de warning.
-	
- 
+# File of ignored includes
+# Used for the errors or warning generation
 
 # iostream
 iostream

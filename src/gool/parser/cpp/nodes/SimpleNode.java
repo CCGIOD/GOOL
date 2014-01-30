@@ -11,9 +11,9 @@ class SimpleNode implements Node {
   protected Node[] children;
   protected int id;
   public Object value;
-  public Object type;
-  public int jjtGetId (){return id;}
-  public Object jjtGetType() {return type;}
+ public Object type;
+ public int jjtGetId (){return id;}
+ public Object jjtGetType() {return type;}
 
   protected CPPParser parser;
   protected Token firstToken;
