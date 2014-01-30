@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [[ -n $1 ]] 
+    then
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp t$1/* ../GOOLINPUTCPP/
+    echo "t$1 chargé :"
+    cat t$1/*
+
+else
+
+nbt=4
+
+for ((i=1 ; $i <= $nbt ; i++)) do
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp t${i}/* ../GOOLINPUTCPP/
+    echo "t${i} chargé :"
+    cat t${i}/*
+    read
+done
+
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp tall/* ../GOOLINPUTCPP/
+    echo "tall chargé :"
+    cat tall/*
+    read
+
+    rm -f -r ../GOOLINPUTCPP/*
+    rm -f ../GOOLOUTPUTJAVA/src/*
+    cp terreur/* ../GOOLINPUTCPP/
+    echo "terreur chargé :"
+    cat terreur/*
+
+fi
