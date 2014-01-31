@@ -182,7 +182,7 @@ fi
 
 
 ## Nettoyage :
-
+# Suppression du fichier prepo.
 rm $FILE_PREPRO
 
 
