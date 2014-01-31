@@ -2,11 +2,17 @@
 
 if [[ -n $1 ]] 
     then
+    
     rm -f -r ../GOOLINPUTCPP/*
     rm -f ../GOOLOUTPUTJAVA/src/*
     cp t$1/* ../GOOLINPUTCPP/
-    echo "t$1 chargé :"
+    echo "####### t$1 chargé #######"
     cat t$1/*
+    
+    echo ""
+    echo "####### Press any key to run CppRecognizer ... #######"
+    read
+    ./script_run_reco
 
 else
 
