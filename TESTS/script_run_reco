@@ -1,8 +1,0 @@
-#!/bin/bash
-
-cd ~/git/GOOL
-
-/usr/lib/jvm/java-7-openjdk-i386/bin/java -Dfile.encoding=UTF-8 -classpath /home/pierre/git/GOOL/bin:/home/pierre/git/GOOL/lib/commons-lang-2.5.jar:/home/pierre/git/GOOL/lib/hamcrest-all-1.3.jar:/home/pierre/git/GOOL/lib/ini4j-0.5.2-SNAPSHOT.jar:/home/pierre/git/GOOL/lib/javacc.jar:/home/pierre/git/GOOL/lib/junit-4.11.jar:/home/pierre/git/GOOL/lib/log4j-1.2.15.jar:/home/pierre/git/GOOL/lib/velocity-1.6.4-dep.jar:/usr/lib/jvm/java-7-openjdk-i386/lib/tools.jar gool.recognizer.cpp.CppRecognizer
-
-
-cd ~/git/TESTS

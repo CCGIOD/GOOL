@@ -1,7 +1,0 @@
-#!/bin/bash
-
-javac -d ../GOOLOUTPUTJAVA/src ../GOOLOUTPUTJAVA/src/$1.java
-cd ../GOOLOUTPUTJAVA/src/
-java $1
-cd ~/git/TESTS
-
